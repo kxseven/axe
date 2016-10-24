@@ -1,0 +1,669 @@
+#!/usr/bin/env python
+
+"""
+Script to facilitate the creation of AWS EC2 Security Groups, Tags for the
+SecurityGroups are pulled from CLOUDBUILDER_ROOT/ENV_PATH/stack_config.yaml.
+Configuration for Rules and Groups are stored in MarkDown format as follows;
+
+GROUPS.MD
+  # Rule_Names must have a matching rule in rules.md
+
+  | Name              | Rule_Names                         | Description       |
+  |:------------------|:-----------------------------------|:------------------|
+  | ABC_BUS_SERVERS   | ALL_FROM_SUBNET,ICMP_FROM_ANYWHERE | ABC Bus Servers   |
+  | ABC_CAR_SERVERS   | ALL_FROM_SUBNET                    | ABC Car Servers   |
+
+RULES.MD
+  # Keywords "Any" or "All" can be used interchangeably for Proto, Port_Range and
+  # Network.
+  # Port range must have a '-' separating ports, or a single port if not a range
+  # All ICMP rules allow the full ICMP protocol set, so Port_Range is ignored
+  # Proto must be one of TCP, UDP, ICMP or All
+  # Network can have:
+  #   a CIDR address
+  #   an existing security group name
+  #   "VPC" (maps to the VPC cidr block)
+  #   "subnet:<subnet_name>" e.g. subnet:PublicFE (maps to the subnet cidr block)
+
+  Rule_Name             | Dir  | Proto   | Port_Range  | Network            |
+  |:--------------------|:-----|:--------|:------------|--------------------|
+  | ALL_FROM_OWN_SUBNET | IN   | All     | All         | ANY                |
+  | ICMP_FROM_ANYWHERE  | IN   | ICMP    | All         | 0.0.0.0/0          |
+  | SSH_FROM_ANYWHERE   | IN   | TCP     | 22-22       | 10.25.1.104/32     |
+
+
+Usage:
+    axe-sg -e <env-dir> (-v <vpc-name>|-V <vpc-id>) [options]
+    axe-sg ( -h | --help )
+
+Options:
+    -c <cb-root>, --cb-root=<cb-root>
+                          The $CLOUDBUILDER_ROOT defaults to ~/.cloudbuilder but
+                          can be overridden if required. [default: ~/.cloudbuilder]
+    -e <env-dir>, --envname=<env-dir>
+                          Environment directory for inputs and outputs relative
+                          to $CLOUDBUILDER_ROOT including a stack_config.yaml
+                          which will contain tags, subnets and more
+    -v <vpc-name>, --vpc-name=<vpc-name>
+                          The vpc-name will be detected from the 'Name' tag
+    -V <vpc-id>, --vpc-id=<vpc-id>
+    -l <log-filename>, --log=<log-filename>
+                          Log [default: $AXE_ROOT/log/axe-sg-create.log]
+    -h, --help            show this help message and exit
+    --debug               More verbose (usually debug) logging and output
+
+"""
+
+# TODO: swap VPC Id for VPC Name tag
+
+import sys
+import os
+import logging
+import docopt
+import axeutils as utils
+from os.path import expanduser
+from axeutils.aws import mapper
+from axeutils.markdown import load_markdown_table
+from copy import deepcopy
+from tabulate import tabulate
+from rainbow_logging_handler import RainbowLoggingHandler
+from iptools import ipv4
+from pprint import pprint as pp
+
+###############################################################################
+# CONFIG - Begin
+###############################################################################
+
+CONST_MIN_BOTO_VERSION = '2.10.0'
+CONST_DIR_TMP = "/tmp"
+CONST_LOG_FORMAT_FILE = '%(asctime)s %(levelname)-5.5s %(module)s:%(lineno)04.4d %(funcName)-25.25s %(message)s'
+CONST_LOG_FORMAT_CONSOLE = '%(asctime)s %(levelname)-5.5s %(message)s'
+CONST_AXE_ROOT = os.getenv('AXE_ROOT', '')
+CONST_CB_ROOT = os.getenv('CLOUDBUILDER_ROOT', None)
+DEFAULT_ENV_DIR = '/tmp'
+
+###############################################################################
+# CONFIG - End (Do Not Edit Below)
+###############################################################################
+
+_log = logging.getLogger(__name__)
+_label_mappings = {}
+
+# Check for Boto installation and correct version
+try:
+    import boto
+except ImportError:
+    print "The 'boto' module does not seem to be available, exiting."
+    sys.exit(1)
+
+try:
+    import colorama
+except ImportError:
+    print "The 'colorama' module does not seem to be available, exiting."
+    sys.exit(1)
+
+from distutils.version import StrictVersion
+if StrictVersion(boto.__version__) < StrictVersion(CONST_MIN_BOTO_VERSION):
+    print 'Error: the boto package version should be at least: ' + \
+        CONST_MIN_BOTO_VERSION + '; installed: ' + boto.__version__
+    sys.exit(1)
+
+from boto import ec2
+from colorama import init as colorama_init
+from colorama import Fore as FG, Back as BG, Style as STYLE
+
+colorama_init()
+
+# We'll use module level variables for the AWS connections to avoid
+# reconnecting to AWS every time we need to do something
+
+_cCOL_DIR = 'Dir'
+_cCOL_DESCRIPTION = 'Description'
+_cCOL_SECURITY_GROUP = 'Name'
+_cCOL_PROTO = 'Proto'
+_cCOL_PORT_RANGE = 'Port_Range'
+_cCOL_NET = 'Network'
+_cCOL_RULE_NAMES = 'Rule_Names'
+_cCOL_RULE_NAME = 'Rule_Name'
+
+
+class SGManager(object):
+    '''Manage EC2 SGs'''
+
+    # You need to sort out this options arg - get rid of it
+    def __init__(self, options, aws_resource_map=None, log=None, confirm=False):
+        # Check if we have a VPC to filter by then map it to an ID
+        vpc = None
+        if options['--vpc-name']:
+            vpc = aws_resource_map.vpc_name_to_vpc(options['--vpc-name'])
+
+        # If we have a vpc-id instead then use it
+        if options['--vpc-id']:
+            vpc = aws_resource_map.vpc_id_to_vpc(options['--vpc-id'])
+
+        self.vpc = vpc
+
+        (self.vpc, self.vpc_conn, self.ec2_conn, self.elb_conn) = aws_resource_map.get_resources()
+
+        self.config_root = expanduser('{}/{}'.format(options['--cb-root'], options['--envname']))
+        self.confirm = confirm
+        self.log = log
+
+    def create_sgs(self):
+        # Still need to check all required config files are there.
+        self.log.debug('In create mode - requires -y to actually do anything')
+        self.log.info('Checking config files')
+
+        # Load the MarkDown configs
+        sgs_to_build = load_markdown_table('{}/sg-groups.md'.format(self.config_root))
+        self.log.debug('Loaded {} SG-Groups'.format(len(sgs_to_build)))
+
+        rules_to_build = load_markdown_table('{}/sg-rules.md'.format(self.config_root))
+        self.log.debug('Loaded {} SG-Rules'.format(len(rules_to_build)))
+
+        sg_aliases = load_markdown_table('{}/sg-aliases.md'.format(self.config_root))
+        self.log.debug('Loaded {} SG-Aliases'.format(len(sg_aliases)))
+
+        _sanity_check_rules_file(sgs_to_build, rules_to_build)
+        _sanity_check_rules(rules_to_build)
+
+        existing_sgs = self._check_existing_sgs(self.vpc, sgs_to_build)
+        vpc_cidr = utils.get_vpc_cidr_block(self.vpc.id, self.vpc_conn)
+        _, v = utils.validate_subnets(self.vpc, self.vpc_conn)
+
+        # Parse rules properly - check for errors
+        formatted_rules = {}
+        for defined_group in sgs_to_build:
+            rule_names = defined_group[_cCOL_RULE_NAMES]
+            applicable_rules = _get_applicable_rules(defined_group[_cCOL_SECURITY_GROUP], rule_names, rules_to_build)
+            formatted_rules[defined_group[_cCOL_SECURITY_GROUP]] = _parse_rules(applicable_rules, vpc_cidr, v.subnets, sgs_to_build, sg_aliases)
+
+        # Now provision security groups
+        self._provision_sgs(sgs_to_build, formatted_rules, existing_sgs, v)
+
+        self.log.info('Done')
+        utils.clean_up()
+
+    def dump_sgs(self):
+        """ Print all existing sgs for the VPC to standard out"""
+        self.vpc = _get_sgs(self.vpc)
+
+        for sg in self.vpc.sgs:
+            print ""
+            print '### {0}'.format(sg.name)
+            print ""
+            table = []
+            # Inbound rules
+            for r in sg.rules:
+                table = table + self._format_sg_rules(r, "IN")
+
+            # Outbound rules
+            for r in sg.rules_egress:
+                table = table + self._format_sg_rules(r, "OUT")
+
+            headers = ["DIR", "Proto", "Port_Range", "Network"]
+            print tabulate(table, headers, tablefmt="pipe")
+
+    def _create_security_group(self, name, sg):
+        res = self.ec2_conn.create_security_group(
+            name,
+            description=sg[_cCOL_DESCRIPTION],
+            vpc_id=self.vpc.id,
+            )
+        _log.info('Security group {0} provisioned.'.format(name))
+        return res
+
+
+    def _get_sgs(self, vpc=None):
+        self.log.info('Retrieving existing security group information')
+        vpc.sgs = [x for x in self.ec2_conn.get_all_security_groups(filters={"vpc-id": vpc})]
+        self.log.info('Discovered {0} existing security groups in VPC {1}'.format(len(sgs), vpc.sgs))
+        return vpc
+
+
+    def _provision_sgs(self, sgs, formatted_rules, existing_sgs, v):
+        """Attempts to provision an AWS Security Group with the specified
+        parameters into the current VPC"""
+
+        groups_to_be_replaced = _get_sgs_for_replacing(existing_sgs)
+
+        if self.confirm is False:
+            self.log.info("Removing existing rules from AWS for security groups defined in groups.md (DRY RUN)")
+            self._replace_security_groups(groups_to_be_replaced, dry_run=True)
+
+            for defined_group in sgs:
+                self.log.info('Attempting to provision security group {0} (DRY RUN)'.format(defined_group[_cCOL_SECURITY_GROUP]))
+                self.log.debug('Security group {} not provisioned. provision_enabled = False'.format(defined_group[_cCOL_SECURITY_GROUP]))
+            return
+
+        sg_objects = {}
+        for defined_group in sgs:
+            self.log.debug('Attempting to provision security group {0}'.format(defined_group[_cCOL_SECURITY_GROUP]))
+            # Only create rules that don't already exist
+            res = None
+            replace = False
+            for group_to_be_replaced in groups_to_be_replaced:
+                if defined_group[_cCOL_SECURITY_GROUP] == group_to_be_replaced.name:
+                    self.log.debug("Don't create {} - exists".format(defined_group[_cCOL_SECURITY_GROUP]))
+                    replace = True
+                    res = group_to_be_replaced
+
+            if replace is False:
+                self.log.debug("Create {}".format(defined_group[_cCOL_SECURITY_GROUP]))
+                res = self._create_security_group(defined_group[_cCOL_SECURITY_GROUP], defined_group)
+            sg_objects[defined_group[_cCOL_SECURITY_GROUP]] = res
+
+        # Remove default outbound rules - get sg.ids of freshly created groups and remove them
+        self.log.info("Removing existing rules from AWS for security groups defined in groups.md.")
+        v = self._get_sgs(v)
+        existing_sgs = self._check_existing_sgs(v, self.config_manager.get_config('sg-groups.md'))
+        groups_to_be_replaced = _get_sgs_for_replacing(existing_sgs)
+        self._replace_security_groups(groups_to_be_replaced, dry_run=False)
+
+        # Refresh sg names for lookup in rules file
+        v = self._get_sgs(v)
+        _mLUT_SECURITY_GROUPS = v.sgs
+        existing_sg_dict = {}
+
+        for g in _mLUT_SECURITY_GROUPS:
+            existing_sg_dict[g.name.lower()] = g
+
+        for defined_group in sgs:
+            self.log.info("Adding rules to {}".format(defined_group[_cCOL_SECURITY_GROUP]))
+            res = sg_objects[defined_group[_cCOL_SECURITY_GROUP]]
+            # Set rules for security groups
+            for rule in formatted_rules[defined_group[_cCOL_SECURITY_GROUP]]:
+                if 'IN' == rule[_cCOL_DIR]:
+                    self.log.debug("Adding {0} to group {1}".format(rule[_cCOL_RULE_NAME], defined_group[_cCOL_SECURITY_GROUP]))
+                    if "sg:" in rule[_cCOL_NET].lower():
+                        res.authorize(rule[_cCOL_PROTO], rule['from_port'], rule['to_port'], src_group=existing_sg_dict[rule[_cCOL_NET][3:].lower()])
+                    elif "sg:amazon-elb/amazon-elb-sg" in rule[_cCOL_NET].lower():
+                        res.authorize(rule[_cCOL_PROTO], rule['from_port'], rule['to_port'], src_group=existing_sg_dict[rule[_cCOL_NET][3:].lower()])
+                    else:
+                        res.authorize(rule[_cCOL_PROTO], rule['from_port'], rule['to_port'], cidr_ip=rule[_cCOL_NET])
+                else:
+                    self.log.debug("EGRESS rule - Adding {0} to group {1}".format(rule[_cCOL_RULE_NAME], defined_group[_cCOL_SECURITY_GROUP]))
+                    src_group_id = None
+                    cidr_ip = rule[_cCOL_NET]
+                    if ipv4.validate_cidr(rule[_cCOL_NET]):
+                        stat = self.ec2_conn.authorize_security_group_egress(res.id, rule[_cCOL_PROTO],
+                                                                   from_port=rule['from_port'],
+                                                                   to_port=rule['to_port'],
+                                                                   src_group_id=src_group_id,
+                                                                   cidr_ip=cidr_ip)
+            self.log.info('Tagging instance with Name')
+            self.ec2_conn.create_tags([res.id], {'Name': defined_group[_cCOL_SECURITY_GROUP]})
+
+            self.log.info('Adding default tags')
+            params = self.config_manager.get_config('params.ini')
+            for k, v in vars(params['default_tags']).iteritems():
+                if k != 'name':
+                    self.log.debug('Adding tag [{0}] = {1}'.format(k.replace('_', '', 1), v))
+                    self.ec2_conn.create_tags([res.id], {k.replace('_', '', 1): v})
+
+            self.log.info('Adding instance tags')
+            for k, v in vars(params['sg_tags']).iteritems():
+                if k != 'name':
+                    self.log.debug('Adding tag [{0}] = {1}'.format(k.replace('_', '', 1), v))
+                    self.ec2_conn.create_tags([res.id], {k.replace('_', '', 1): v})
+
+            self.log.info('Security group {0} [{1}] now created and tagged'.format(defined_group[_cCOL_SECURITY_GROUP], res.id))
+        return
+
+
+    def _format_sg_rules(self, r, direction):
+        # Format Port Range
+        port_range = "{0}-{1}".format(r.from_port, r.to_port) if r.from_port != r.to_port else str(r.from_port)
+        if "-1" == port_range or -1 == port_range:
+            port_range = "N/A"
+        if None is port_range or "None" == port_range:
+            port_range = "All"
+
+        # Format Protocol
+        if "-1" == r.ip_protocol or -1 == r.ip_protocol:
+            proto = "All"
+        else:
+            proto = str(r.ip_protocol)
+
+        # Format Network - there can be multiple nets in a rule, so we split them
+        # out to separate rules like AWS does
+        rules = []
+        for nw in r.grants:
+            n = str(nw)
+            if ipv4.validate_cidr(n):
+                network = n
+            else:
+                # It's a SG, which for some reason has an IAM user id
+                # appended, so we remove it
+                network = _strip_iam_id_from_sg(n)
+                # Print its name rather than its id
+                network = utils.map_sg_id_to_name(network, self.vpc.sgs)
+            rules.append([ direction, proto, port_range, network ])
+
+        return rules
+
+    def _check_existing_sgs(self, v, groups):
+        global _mLUT_SECURITY_GROUPS
+
+        existing_sgs = []
+        v = self._get_sgs(v)
+        _mLUT_SECURITY_GROUPS = v.sgs
+
+        # Check for existing SGs
+        for g in groups:
+            for sg in v.sgs:
+                if g[_cCOL_SECURITY_GROUP] in sg.name:
+                    if self.confirm is False:
+                        self.log.warning("{0} ({1}) already exists in VPC {2}. Running with -y will replace all existing {0} rules".format(g[_cCOL_SECURITY_GROUP], sg.id, v.id))
+                    existing_sgs.append(sg.id)
+
+        return frozenset(existing_sgs)
+
+
+    def _replace_security_groups(self, sgs, dry_run=True):
+        for sg in sgs:
+            self.log.info("Removing rules from {}{}".format(sg.name, " - DRY_RUN" if dry_run else ""))
+            for rule in sg.rules:
+                self.log.debug("Deleting inbound " + str(rule))
+                for grant in rule.grants:
+                    try:
+                        self.ec2_conn.revoke_security_group(src_security_group_owner_id=grant.owner_id,
+                              ip_protocol=rule.ip_protocol, from_port=rule.from_port, to_port=rule.to_port,
+                              cidr_ip=grant.cidr_ip, group_id=sg.id,
+                              src_security_group_group_id=grant.group_id, dry_run=dry_run)
+                    except EC2ResponseError, e:
+                        if dry_run is False:
+                            self.log.error(e)
+                            utils.clean_up(-1)
+            for rule in sg.rules_egress:
+                self.log.debug("Deleting outbound " + str(rule))
+                for grant in rule.grants:
+                    try:
+                        self.ec2_conn.revoke_security_group_egress(group_id=sg.id, ip_protocol=rule.ip_protocol,
+                              from_port=rule.from_port, to_port=rule.to_port,
+                              cidr_ip=grant.cidr_ip,
+                              src_group_id=grant.group_id, dry_run=dry_run)
+                    except EC2ResponseError, e:
+                        if dry_run is False:
+                            self.log.error(e)
+                            utils.clean_up(-1)
+
+
+###############################################################################
+# Functions
+###############################################################################
+
+def _sanity_check_rules_file(sgs_to_build, rules_to_build):
+    """ Ensure all rule names in group file have a corresponding entry in rules file."""
+
+    # Check rules in rule file have an entry in groups first
+    _valid_rule_names = utils.flatten_mixed_list([sg[_cCOL_RULE_NAMES] for sg in sgs_to_build])
+    valid_rule_names = [x.strip() for x in _valid_rule_names]
+
+    for rule in rules_to_build:
+        _log.debug('Rule name: ' + rule[_cCOL_RULE_NAME])
+        if rule[_cCOL_RULE_NAME] not in valid_rule_names:
+            _log.warn('Rule {} does not exist in sg-groups.md.'.format(rule[_cCOL_RULE_NAME]))
+
+    available_rule_names = [ rule[_cCOL_RULE_NAME] for rule in rules_to_build ]
+
+    _group_rule_names = utils.flatten_mixed_list([sg[_cCOL_RULE_NAMES] for sg in sgs_to_build])
+    group_rule_names = [x.strip() for x in _group_rule_names]
+
+
+    for rule in group_rule_names:
+        _log.debug('Rule name: ' + rule)
+        if rule not in available_rule_names and rule != "":
+            _log.error('Rule {} does not exist in sg-rules.md. Exiting.'.format(rule))
+            utils.clean_up(-1)
+
+
+def _sanity_check_rules(rules_to_build):
+    """ Ensure rules make sense."""
+    # TODO: This is sommewhat redunant with the _parse_rules function
+    for rule in rules_to_build:
+        if '' in rule.values():
+            _log.error('Incorrectly formatted rule - all fields must have a value: {}'.format(rule))
+            utils.clean_up(-1)
+
+
+
+def _get_applicable_rules(sg, rule_names, rules):
+    applicable_rules = []
+    applicable_rule_names = []
+    if type(rule_names) is str:
+        rule_names = [rule_names]
+    for group_rule in rule_names:
+        for rule in rules:
+            if rule[_cCOL_RULE_NAME] == group_rule and rule[_cCOL_RULE_NAME] not in applicable_rule_names:
+                _log.debug('Rule {0} found in group {1}'.format(rule[_cCOL_RULE_NAME], sg))
+                applicable_rules.append(rule)
+                applicable_rule_names.append(rule[_cCOL_RULE_NAME])
+
+    return applicable_rules
+
+
+def _parse_rules(rules, vpc_cidr, subnets, sgs_to_build, sg_aliases):
+    # TODO: Could do this better...
+    sg_names = [d['Name'].lower() for d in sgs_to_build]
+    alias_names = [d['Name'].lower() for d in sg_aliases]
+    formatted_rules = []
+    valid = True
+    failed_portion = []
+
+    for rule in rules:
+        # Check if we've seen this rule before, if so return as is
+        if rule.get('parsed') is True:
+            _log.debug("Already parsed {0}".format(rule[_cCOL_RULE_NAME]))
+            formatted_rules.append(rule)
+        else:
+
+            # Deal with port ranges
+            from_port = ""
+            to_port = ""
+            alias = False
+            if '-' in rule[_cCOL_PORT_RANGE]:
+                ranges = [l.strip() for l in rule[_cCOL_PORT_RANGE].split('-')]
+                if 2 != len(ranges):
+                    valid = False
+                    failed_portion.append(_cCOL_PORT_RANGE)
+                from_port = ranges[0]
+                to_port = ranges[1]
+            elif rule[_cCOL_PORT_RANGE].isdigit():
+                from_port = to_port = rule[_cCOL_PORT_RANGE]
+            elif "All".lower() == rule[_cCOL_PORT_RANGE].lower():
+                from_port = 0
+                to_port = 65535
+            else:
+                valid = False
+                failed_portion.append(_cCOL_PORT_RANGE)
+
+            # Check direction
+            if "IN" != rule[_cCOL_DIR] and "OUT" != rule[_cCOL_DIR]:
+                valid = False
+                failed_portion.append(_cCOL_DIR)
+
+            # Check Protocol
+            rule[_cCOL_PROTO] = rule[_cCOL_PROTO].upper()
+            if ("TCP" != rule[_cCOL_PROTO] and "UDP" != rule[_cCOL_PROTO] and
+               "ICMP" != rule[_cCOL_PROTO] and "ALL" != rule[_cCOL_PROTO] and
+               "-1" != rule[_cCOL_PROTO]):
+                _log.error(rule[_cCOL_PROTO])
+                valid = False
+                failed_portion.append(_cCOL_PROTO)
+            if "ALL" == rule[_cCOL_PROTO]:
+                rule[_cCOL_PROTO] = "-1"
+
+            # ICMP can't have ports specified
+            if rule[_cCOL_PROTO] == "ICMP":
+                _log.warning("Any ICMP rule will enable *ALL* ICMP protocols.")
+                to_port = from_port = -1
+
+            # Check network
+            if rule[_cCOL_NET].lower() == "ANY".lower():
+                _log.debug('Converting Network from "ANY" to 0.0.0.0/0')
+                rule[_cCOL_NET] = '0.0.0.0/0'
+
+            elif rule[_cCOL_NET].lower() == "VPC".lower():
+                _log.debug('Converting Network from "VPC" to VPC CIDR block ({})'.format(vpc_cidr))
+                rule[_cCOL_NET] = vpc_cidr
+
+            elif "subnet:" in rule[_cCOL_NET].lower():
+                matched_subnet = None
+                for subnet in subnets:
+                    if subnet.tags['Name'] == rule[_cCOL_NET][7:]:
+                        _log.debug("Matched subnet {}".format(subnet.tags['Name']))
+                        matched_subnet = subnet
+
+                if matched_subnet:
+                    _log.debug('Converting Network from {0} to subnet CIDR block ({1})'.format(rule[_cCOL_NET], matched_subnet.cidr_block))
+                    rule[_cCOL_NET] = matched_subnet.cidr_block
+                else:
+                    _log.error('Unknown subnet: {}'.format(rule[_cCOL_NET][7:]))
+            elif ipv4.validate_cidr(rule[_cCOL_NET]):
+                _log.debug(rule[_cCOL_NET])
+            elif "sg:" in rule[_cCOL_NET].lower():
+                if rule[_cCOL_NET][3:].lower() in sg_names:
+                    _log.debug("Security group: {}".format(rule[_cCOL_NET]))
+                elif rule[_cCOL_NET][3:].lower() == "amazon-elb/amazon-elb-sg":
+                    _log.debug("Security group: {}".format(rule[_cCOL_NET]))
+                else:
+                    valid = False
+                    failed_portion.append(rule[_cCOL_NET])
+            elif "alias:" in rule[_cCOL_NET].lower():
+                if rule[_cCOL_NET][6:].lower() in alias_names:
+                    alias = rule[_cCOL_NET][6:].lower()
+                    _log.debug("Alias: {}".format(rule[_cCOL_NET]))
+                else:
+                    valid = False
+                    failed_portion.append(rule[_cCOL_NET])
+            else:
+                _log.debug(rule[_cCOL_NET])
+                _log.debug(sg_names)
+                valid = False
+                failed_portion.append(rule[_cCOL_NET])
+
+            # If any of the above checks failed, abort
+            if valid is False:
+                _log.error("Incorrectly formatted rule: {} at {}".format(rule[_cCOL_RULE_NAME], ', '.join(failed_portion)))
+                utils.clean_up(-1)
+
+            rule['from_port'] = from_port
+            rule['to_port'] = to_port
+
+            if alias:
+                for a in sg_aliases:
+                    if alias == a['Name'].lower():
+                        nets = a['Network']
+                        if type(nets) is list:
+                            for net in nets:
+                                _rule = deepcopy(rule)
+                                _rule[_cCOL_NET] = net
+                                _rule['parsed'] = True
+                                formatted_rules.append(_rule)
+                        else:
+                            _rule = deepcopy(rule)
+                            _rule[_cCOL_NET] = nets
+                            _rule['parsed'] = True
+                            formatted_rules.append(_rule)
+            else:
+                rule['parsed'] = True
+                formatted_rules.append(rule)
+
+    return formatted_rules
+
+
+def _get_sgs_for_replacing(sgs):
+    _log.debug("Find security groups for replacing")
+    del_groups = []
+    for s in sgs:
+        for sg in _mLUT_SECURITY_GROUPS:
+            if s in sg.id:
+                _log.debug("Group {} will be replaced".format(sg.name))
+                del_groups.append(sg)
+    return del_groups
+
+
+def _strip_iam_id_from_sg(sg_name):
+    """SG's in rules returned by get_security_groups have an
+    IAM user id appended, so we remove it"""
+    return '-'.join(sg_name.split('-')[:2])
+
+
+def main(options):
+    """
+    The main program function
+    """
+    global _mCOMMAND_LINE_OPTIONS
+    _mCOMMAND_LINE_OPTIONS = docopt.docopt(__doc__)
+
+    # TODO: Improve logging configuration and setup
+
+    log_file_name = options['--log'].replace('$AXE_ROOT', CONST_AXE_ROOT)
+
+    if os.path.exists(os.path.dirname(log_file_name)):
+
+        # Setup default file logging and set the handler to recieve everything
+        fh = logging.FileHandler(log_file_name)
+        fh.setFormatter(logging.Formatter(CONST_LOG_FORMAT_FILE))
+
+        fh.setLevel(logging.INFO)
+        _log.addHandler(fh)
+
+        # Add a log handler for stdout and set the handler to recieve everything
+        csh = RainbowLoggingHandler(sys.stderr, color_funcName=('black', 'yellow', True))
+        csh.setFormatter(logging.Formatter(CONST_LOG_FORMAT_CONSOLE))
+        csh.setLevel(logging.DEBUG)
+        _log.addHandler(csh)
+
+        # Now set the root logger to INFO
+        _log.setLevel(logging.INFO)
+
+    else:
+
+        raise (
+            "log directory does not exist ("
+            + os.path.dirname(log_file_name)
+            + ")")
+
+        clean_up(-1)
+
+    # Check for verbose logging enabled
+
+    if options['--debug'] is True:
+        _log.setLevel(logging.DEBUG)
+        _log.debug('Debug logging enabled')
+
+    for key, value in options.iteritems():
+        _log.debug('command-line options: {}: {}'.format(key, value))
+
+    try:
+
+        m = mapper.AwsResourceMapper()
+        sg = SGManager(options, m, log=_log)
+        sg.create_sgs()
+
+    except KeyboardInterrupt:
+        _log.info('Interrupted.. (try with -v for verbose mode if you need more info)')
+        clean_up(-1)
+
+    except AssertionError, e:
+        _log.warn(e)
+        clean_up(-1)
+
+    clean_up()
+
+
+def clean_up(returnValue=0):
+    sys.exit(returnValue)
+
+
+if __name__ == "__main__":
+
+    try:
+        options = docopt.docopt(__doc__)
+        main(options)
+
+    # Handle invalid options
+    except docopt.DocoptExit as e:
+        print e.message

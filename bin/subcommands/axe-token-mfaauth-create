@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+"""
+Basic script to provide AWS Session Tokens
+
+Usage:
+    axe-token-mfaauth-create <access_key> <secret_key> <mfa_serial_number> <mfa_token> [ --debug ]
+    axe-token-mfaauth-create ( -h | --help )
+
+"""
+
+from future.utils import iteritems
+
+import os
+import docopt
+import axeutils
+from axeutils.logger import AxeLog
+from axeutils import check_imports, clean_up
+
+###############################################################################
+# CONFIG - Begin
+###############################################################################
+
+CONST_DIR_TMP = "/tmp"
+CONST_AXE_ROOT = os.getenv('AXE_ROOT', '')
+CONST_STS_TOKEN_DURATION = 3600
+
+###############################################################################
+# CONFIG - End (Do Not Edit Below)
+###############################################################################
+
+_log = AxeLog(__file__)
+check_imports()
+
+import boto
+
+try:
+    options = docopt.docopt(__doc__)
+
+    if options['--debug'] is True:
+        import logging
+        _log.setLevel(logging.DEBUG)
+
+    for key, value in iteritems(options):
+        _log.debug('command-line options: {}: {}'.format(key, value))
+
+    access_key = options['<access_key>']
+    secret_key = options['<secret_key>']
+    mfa_serial_number = options['<mfa_serial_number>']
+    mfa_token = options['<mfa_token>']
+
+    sts = boto.connect_sts(access_key, secret_key)
+    token = sts.get_session_token(
+        duration=CONST_STS_TOKEN_DURATION,
+        force_new=True,
+        mfa_serial_number=mfa_serial_number,
+        mfa_token=mfa_token
+        )
+
+    print('aws_access_key_id {0}'.format(token.access_key))
+    print('aws_secret_access_key {0}'.format(token.secret_key))
+    print('aws_security_token {0}'.format(token.session_token))
+
+# Handle invalid options
+except docopt.DocoptExit as e:
+    print(e.message)

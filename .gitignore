@@ -1,0 +1,23 @@
+/log
+/tmp
+/local
+# IDEs
+.idea/
+.project
+.pydevproject
+.settings/
+### Vim ###
+*.swp
+
+### SublimeText ###
+# workspace files are user-specific
+*.sublime-workspace
+*.sublime-project
+
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pth
+
+wip/

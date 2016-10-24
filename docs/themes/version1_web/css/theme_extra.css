@@ -1,0 +1,213 @@
+/*
+ * Tweak the overal size to better match RTD.
+ */
+body {
+    font-size: 90%;
+}
+
+h3, h4, h5, h6 {
+    color: #2980b9;
+    font-weight: 300
+}
+
+/*
+ * Sphinx doesn't have support for section dividers like we do in
+ * MkDocs, this styles the section titles in the nav
+ *
+ * https://github.com/mkdocs/mkdocs/issues/175
+ */
+.wy-menu-vertical span {
+    line-height: 18px;
+    padding: 0.4045em 1.618em;
+    display: block;
+    position: relative;
+    font-size: 90%;
+    color: #838383;
+}
+
+.wy-menu-vertical .subnav a {
+    padding: 0.4045em 2.427em;
+}
+
+/*
+ * Long navigations run off the bottom of the screen as the nav
+ * area doesn't scroll.
+ *
+ * https://github.com/mkdocs/mkdocs/pull/202
+ */
+.wy-nav-side {
+    height: 100%;
+    overflow-y: auto;
+}
+
+/*
+ * readthedocs theme hides nav items when the window height is
+ * too small to contain them.
+ *
+ * https://github.com/mkdocs/mkdocs/issues/#348
+ */
+.wy-menu-vertical ul {
+  margin-bottom: 2em;
+}
+
+/*
+ * Fix wrapping in the code highlighting
+ *
+ * https://github.com/mkdocs/mkdocs/issues/233
+ */
+code {
+    white-space: pre;
+}
+
+/*
+ * Wrap inline code samples otherwise they shoot of the side and
+ * can't be read at all.
+ *
+ * https://github.com/mkdocs/mkdocs/issues/313
+ */
+p code {
+    word-wrap: break-word;
+}
+
+/*
+ * The CSS classes from highlight.js seem to clash with the
+ * ReadTheDocs theme causing some code to be incorrectly made
+ * bold and italic.
+ *
+ * https://github.com/mkdocs/mkdocs/issues/411
+ */
+code.cs, code.c {
+    font-weight: inherit;
+    font-style: inherit;
+}
+
+
+/*
+ * Fix some issues with the theme and non-highlighted code
+ * samples. Without and highlighting styles attached the
+ * formatting is broken.
+ *
+ * https://github.com/mkdocs/mkdocs/issues/319
+ */
+.no-highlight {
+  display: block;
+  padding: 0.5em;
+  color: #333;
+}
+
+
+/*
+ * Additions specific to the search functionality provided by MkDocs
+ */
+
+#mkdocs-search-results article h3
+{
+    margin-top: 23px;
+    border-top: 1px solid #E1E4E5;
+    padding-top: 24px;
+}
+
+#mkdocs-search-results article:first-child h3 {
+    border-top: none;
+}
+
+#mkdocs-search-query{
+    width: 100%;
+    border-radius: 50px;
+    padding: 6px 12px;
+    border-color: #D1D4D5;
+}
+
+.wy-menu-vertical li ul {
+    display: inherit;
+}
+
+.wy-menu-vertical li ul.subnav ul.subnav{
+    padding-left: 1em;
+}
+
+img
+{
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    border: 1px #e4e4e4 solid;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 0 4px #ccc;
+}
+
+BODY {
+    counter-reset: counter-h1;
+}
+H1:before {
+    content: counter(counter-h1) ". ";
+    counter-increment: counter-h1;
+}
+H1 {
+    counter-reset: counter-h2;
+}
+
+H2:before {
+    content: counter(counter-h1) "." counter(counter-h2) " ";
+    counter-increment: counter-h2;
+}
+
+H2 {
+    counter-reset: counter-h3;
+}
+
+H3:before {
+    content: counter(counter-h1) "." counter(counter-h2) "." counter(counter-h3) " ";
+    counter-increment: counter-h3;
+}
+
+H3 {
+    counter-reset: counter-h4;
+}
+
+H4:before {
+    content: counter(counter-h1) "." counter(counter-h2) "." counter(counter-h3) "." counter(counter-h4) " ";
+    counter-increment: counter-h4;
+}
+
+
+h1 {
+    color: #00632F;
+    page-break-before: always;
+}
+
+h2 {
+    background-color: inherit;
+}
+
+h3 {
+    background-color: inherit;
+}
+
+h4 {
+    background-color: inherit;
+}
+
+h6 {
+    background-color: inherit;
+}
+
+hr {
+    height: 0.2em;
+    border: 0;
+    color: #CCCCCC;
+    background-color: #CCCCCC;
+}
+
+.wy-nav-content {
+    max-width: 100%;
+}
+
+@page
+{
+    size: auto;   /* auto is the initial value */
+    /* this affects the margin in the printer settings */
+    margin: 5mm 5mm 5mm 5mm;
+}
+

@@ -1,0 +1,118 @@
+# Main
+---
+stack_name: 'EXAMPLE_STACK'
+stack_description: 'An example stack'
+dns_suffix: 'testing.example.com'
+default_key_name: 'aws-cloud-admin'
+region_name: 'eu-west-1'
+
+# Default tags will get assigned to everything that the tool creates. Be aware
+# that AWS currently has a limit of 10 tags max per resource
+default_tags:
+ - environment: 'EXAMPLE'
+ - owner: 'example@emailhost.com'
+ - billing_id: 'WERTYU472927F'
+
+
+# Instance tags will get assigned only to instances that the tool creates,
+# after the default tags have been added
+instance_tags:
+ - dummy_instance_tag: 'instance blah blah'
+
+# Security Group tags will get assigned only to instances that the tool creates,
+# after the default tags have been added
+sg_tags:
+- dummy_sg_tag: 'sg blah blah'
+
+# The AMI ID to use for the Unified Traffic Manager and NAT services. You can
+# uncomment one of these
+#
+# utm_ami_id: 'ami-30913f47'          # AWS NAT Instance for EU-West-1
+# utm_ami_id: 'ami-e21d5395'          # Sophos UTM Instance for EU-West-1
+utm_ami_id: 'ami-e21d5395'
+
+cidr_block: '10.200.0.0/16'
+
+# The goal is to build a series of subnets that conform to a pattern,
+# independant of how many AZs are used
+#
+# Below is an example implementation of the 'Trio' pattern from the Version-1
+# Cloud Reference Architectures.
+#
+# | Description            | Prefix | AZ_A_3rd_Octet   | AZ_B_3rd_Octet   | AZ_C_3rd_Octet   | Type      |
+# |:---------------------- |:------ | ----------------:| ----------------:| ----------------:|:----------|
+# | Management             | MGT    | 10               | 20               | 30               | internal  |
+# | Public Internet Facing | PUB    | 11               | 21               | 31               | external  |
+# | DMZ                    | DMZ    | 12               | 22               | 32               | dmz       |
+# | Application            | APP    | 13               | 23               | 33               | internal  |
+# | Datastore              | DATA   | 14               | 24               | 34               | internal  |
+
+stack:
+ - zone:
+    - subnet:
+        - prefix: 'mgt'
+        - cidr_block: 10.200.10.0/24
+        - type: 'internal'
+    - subnet:
+        - prefix: 'web'
+        - cidr_block: 10.200.11.0/24
+        - type: 'external'
+    - subnet:
+        - prefix: 'dmz'
+        - cidr_block: 10.200.12.0/24
+        - type: 'dmz'
+        - utm_subnet: 'web'
+    - subnet:
+        - prefix: 'app'
+        - cidr_block: 10.200.13.0/24
+        - type: 'internal'
+    - subnet:
+        - prefix: 'data'
+        - cidr_block: 10.200.14.0/24
+        - type: 'internal'
+ - zone:
+    - subnet:
+        - prefix: 'mgt'
+        - cidr_block: 10.200.20.0/24
+        - type: 'internal'
+    - subnet:
+        - prefix: 'web'
+        - cidr_block: 10.200.21.0/24
+        - type: 'external'
+    - subnet:
+        - prefix: 'dmz'
+        - cidr_block: 10.200.22.0/24
+        - type: 'dmz'
+        - utm_subnet: 'web'
+    - subnet:
+        - prefix: 'app'
+        - cidr_block: 10.200.23.0/24
+        - type: 'internal'
+    - subnet:
+        - prefix: 'data'
+        - cidr_block: 10.200.24.0/24
+        - type: 'internal'
+ - zone:
+    - subnet:
+        - prefix: 'mgt'
+        - cidr_block: 10.200.30.0/24
+        - type: 'internal'
+    - subnet:
+        - prefix: 'web'
+        - cidr_block: 10.200.31.0/24
+        - type: 'external'
+    - subnet:
+        - prefix: 'dmz'
+        - cidr_block: 10.200.32.0/24
+        - type: 'dmz'
+        - utm_subnet: 'web'
+    - subnet:
+        - prefix: 'app'
+        - cidr_block: 10.200.33.0/24
+        - type: 'internal'
+    - subnet:
+        - prefix: 'data'
+        - cidr_block: 10.200.34.0/24
+        - type: 'internal'
+
+

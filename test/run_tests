@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+TEST_ROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+for current_test in $(ls -1 ${TEST_ROOT}/test_*.sh | grep '\.sh$')
+do
+    test_name=$(basename "$current_test")
+    echo -n "INFO : Running ${test_name}..."
+    bash ${current_test} &> ${current_test}.out
+    # Fail and bail out if test didn't pass
+    PASSED=$(diff ${current_test}.out ${current_test}.pass 2>&1)
+    if [ ! -z "$PASSED" ]
+    then
+        echo "FAIL"
+        echo "ERROR: Test ${test_name} failed."
+        echo "  >> Expected Output is in ${current_test}.pass"
+        echo "  >> Actual Test Output is in ${current_test}.out"
+        exit 1
+    else
+        echo "OK"
+        rm -rf "${current_test}.out"
+    fi
+done
+
+echo "INFO : All tests passed"

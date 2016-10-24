@@ -1,0 +1,12 @@
+# Basic completion for BASH by listing available commands
+_axe()
+{
+    local cur prev opts base
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="$(axe -c)"
+
+    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    return 0
+}

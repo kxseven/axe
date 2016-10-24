@@ -1,0 +1,59 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowAllUsersToListAccounts",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListAccountAliases",
+                "iam:ListUsers"
+            ],
+            "Resource": [
+                "arn:aws:iam::*"
+            ]
+        },
+        {
+            "Sid": "AllowIndividualUserToSeeTheirAccountInformation",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ChangePassword",
+                "iam:CreateLoginProfile",
+                "iam:DeleteLoginProfile",
+                "iam:GetAccountPasswordPolicy",
+                "iam:GetAccountSummary",
+                "iam:GetLoginProfile",
+                "iam:UpdateLoginProfile"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:user/${aws:username}"
+            ]
+        },
+        {
+            "Sid": "AllowUsersToListMFAs",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListVirtualMFADevices",
+                "iam:ListMFADevices"
+            ],
+            "Resource": [
+                "arn:aws:iam::*",
+                "arn:aws:iam::*"
+            ]
+        },
+        {
+            "Sid": "AllowIndividualUserToManageThierMFA",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateVirtualMFADevice",
+                "iam:DeactivateMFADevice",
+                "iam:DeleteVirtualMFADevice",
+                "iam:EnableMFADevice",
+                "iam:ResyncMFADevice"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:mfa/${aws:username}",
+                "arn:aws:iam::*:user/${aws:username}"
+            ]
+        }
+    ]
+}

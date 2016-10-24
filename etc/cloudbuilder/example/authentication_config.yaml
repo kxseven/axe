@@ -1,0 +1,27 @@
+Groups:
+ - name: Cloud_Admin
+   policies:
+    - name: AdministratorAccess
+
+ - name: Cloud_User
+   policies:
+    - name: ReadOnlyAccess
+
+ - name: Cloud_ReadOnly
+   policies:
+    - name: ReadOnlyAccess
+
+Roles:
+ - name: Cloud_Monitor
+   service: ec2.amazonaws.com
+   policies:
+    - name: ReadOnlyAccess
+
+ - name: Cloud_Backup
+   service: ec2.amazonaws.com
+   policies:
+
+Users:
+ - name: admin
+   groups:
+    - name: Admin

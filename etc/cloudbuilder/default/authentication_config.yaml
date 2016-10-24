@@ -1,0 +1,45 @@
+# Custom Policies
+Policies:
+  - name: CloudAdminMFAPolicy
+    descr: Version1 Admin MFA policy 
+
+  - name: CloudUserMFAPolicy
+    descr: Version1 User MFA policy 
+
+  - name: CloudUserPolicy
+    descr: Version1 custom user policy
+
+Groups:
+ - name: Cloud_Admin
+   policies:
+    - name: CloudAdminMFAPolicy
+    - name: CloudUserMFAPolicy
+
+ - name: Cloud_User
+   policies:
+    - name: CloudUserMFAPolicy
+    - name: CloudUserPolicy
+
+ - name: Cloud_ReadOnly
+   policies:
+    - name: ReadOnlyAccess
+
+Roles:
+ - name: Cloud_Monitor
+   service: ec2.amazonaws.com
+   policies:
+    - name: ReadOnlyAccess
+
+ - name: Cloud_Backup
+   service: ec2.amazonaws.com
+   policies:
+    - name: ReadOnlyAccess
+
+Users:
+ - name: admin 
+   groups:
+    - name: Cloud_Admin
+
+ - name: user 
+   groups:
+    - name: Cloud_User

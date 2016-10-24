@@ -66,7 +66,12 @@ On the assumption that you have a Ubuntu based OS with a working version of git 
  - Install build tools for Python module creation
 
         sudo yum groupinstall "Development Tools" (RHEL/CentOS)
-        sudo apt-get insrtall build-essential (Debian/Ubuntu)
+        sudo apt-get install build-essential (Debian/Ubuntu)
+
+ - Install packages needed for Kerberos based authentication
+
+        sudo yum install gcc libffi-devel python-devel openssl-devel (RHEL/CentOS)
+        sudo apt-get install python-gssapi python-kerberos python-requests-kerberos libkrb5-dev libssl-dev libffi-dev python-dev (Debian/Ubuntu)
 
  - Activate the local Python
 
@@ -83,14 +88,31 @@ On the assumption that you have a Ubuntu based OS with a working version of git 
 
         EOF
 
- - Add at least one set of personal credentials to your own identity store (Optional)
+ - Deactive the VirtualEnv and log back in again to verify that all works as expected.
 
-    it's **very** important that your `aws_mfa_id` is specified as mfa/userid and not user/userid
+## Configuring Identities in AXE
+
+ - Start by creating a directory in which to store your id
 
         mkdir -p ~/.axe/identities
         mkdir -p ~/.axe/identities/<id-name>
 
-        cat > ~/.axe/identities/<id-name>/aws.conf <<-EOF
+ - If you don't have your SSH key to hand you can simply create an empty file for now and replace this with you PEM PrivateKey file provided by AWS
+
+        touch ~/.axe/identities/<id-name>/ssh_id.pem
+
+
+### MFA Based Identity
+
+ - A basic MFA identity uses two files; 1) AWS Config, 2) A valid private key for use when using axe-ssh or axe-scp
+
+        $HOME/.axe/
+                  ├── PERSONAL-example-us-west-2
+                  │   ├── aws.conf
+                  │   └── ssh_id.pem
+
+ - Add at least one set of personal credentials to your own identity store. It's **very** important that your `aws_mfa_id` is specified as mfa/userid and not user/userid
+
         [default]
         output = json
         aws_access_key_id=ABCDEFGHIJKLMNOP (Replace with AWS provided KEY)
@@ -100,9 +122,49 @@ On the assumption that you have a Ubuntu based OS with a working version of git 
 
         [preview]
         cloudfront=true
-        EOF
 
-        touch ~/.axe/identities/<id-name>/ssh_id.pem (Replace this with you PEM PrivateKey file provided by AWS)
+### Kerberos authenticated IAM Role using SAML2
+
+ - The folder structure is slightly different and needs to contain an `idp_params.json` file that configures which parameters are needed from the Federated Identity Provider
+
+        $HOME/.axe/
+                  ├── CORP-DEPT-ADFS-example-eu-west-1
+                  │   ├── aws.conf
+                  │   ├── idp_params.json
+                  │   └── ssh_id.pem
+
+
+ - The `aws.conf` is as follows
+
+        [default]
+        output = json
+        aws_access_key_id=
+        aws_secret_access_key=
+        aws_idp_url='https://special-URL-that-triggers-SAML-authentication/from/your/company/to/aws'
+        aws_idp_principal=YOURID@YOURCORP.COM
+        region=eu-west-1
+
+        [preview]
+        cloudfront=true
+
+ - The `idp_params.json` contains any form fields and respective values that need to be provided when accessing the SAML URL
+
+        {
+            "special_username": "joe.dummy@corp.com",
+            "special_password": "blah",
+            "hidden_field": "credential"
+        }
+
+ - A value of `<ask>` can be specified in the JSON value to have the script ask the user at runtime.
+
+ - A value of `<password>` can be specified to have the user provide input and not echo the text (Useful for passwords)
+
+ - Generally when loading SAML2 based identities the Kerberos session needs to be initialized first to avoid getting errors when attempting to access the form.
+
+        ERROR: I can't protect from your own stupidity. No Kerberos token found. Start with kinit
+        ERROR: Valid credentials not found in /tmp/awsmfaiF1l. Token generation failed
+
+ - Initialize your Kerberos session using `kinit MY-REALM-ID@MY-CORP.COM -V`
 
 
 ## AXE Commands
@@ -130,77 +192,12 @@ Each of the AXE commands exists as a stand-along scriptlet in `$AXE_ROOT/bin/sub
 
 There are additional utility scriptlets in `$AXE_ROOT/bin/tools/` which are intended to be helper scripts for processing AWS data at the command line.
 
- - json2properties.py
-
-> Converts JSON text to Java .properties notation to make programatic parsing easier
-
-    $ bin/tools/json2properties.py -h
-    Usage: json2properties.py [options]
-      change json to line separated text.
-        {a:[8,"b"]}
-      is converted
-        a.0=8
-        a.1="b"
-
-    Example:
-      curl -s https://api.github.com/gists/public \
-        | $AXE_ROOT/bin/tools/json2properties.py \
-        | grep "aaa.bbb"
-
-      aws ec2 describe-instances --filter '{"name":"tag:Name","values":"ft01"}' \
-        | $AXE_ROOT/bin/tools/json2properties.py --tsv \
-        | awk '/InstanceId/{print $2}'
-
-
-    Options:
-      -s SEP, --sep=SEP  separator of key hierarchy. default '.'
-      -e EQ, --eq=EQ     separator of key and value. default '='
-      --tsv              format as tsv. ex json{a:{b:1,c:2}} is "a.b\t1\na.c\t2"
-      --listkey=LISTKEY  define callback lambda that format list key. lambda has
-                         argument name is 'key'. ex: --listkey "'*'"
-      -l                 do not print list key. if option defined then
-                         json{a:[8,"b"]} is 'a=8 a="b"'. This option is same as
-                         set listkey to 'None'
-      --format=FORMAT    define callback lambda that format value. lambda has
-                         argument name is 'val'. default format is
-                         'json.dumps(val)'. ex: --format "'['+str(val)+']'"
-      -h, --help         show this help message and exit
-
-
-
- - json2table.py
-
-> Converts JSON to tables in all formats supported by the Python [tabulate](https://pypi.python.org/pypi/tabulate) library
-
-    $ bin/tools/json2table.py -h
-    Simple utility script that reads JSON from STDIN and attempts to convert the
-    content to a table, before output in a given format. Very useful for the walls
-    of text that adding "--output=json" to AWS cli commands generates
-
-    Usage:
-        jason2table [options]
-        jason2table ( -h | --help )
-
-    Options:
-        -f <format>, --format=<format>
-                            Supported values are; plain, simple, grid, pipe,
-                            orgtbl, rst, mediawiki, latex [default: simple]
-        -k, --key=<key>     Object to use a key for array retrieval if JSON contains
-                            a dict of lists. If not provided then command will
-                            assume that content is an list
-        -c, --cols=<cols>   A CSV string specifying the columns from the data to
-                            use as a filter before displaying the results
-        -h, --help          Show this help message and exit
-        --debug             Show more verbose logging
-
-
-
-Emulate the output of the `axe image-list` command
-
-    aws ec2 describe-images --owners="self" \
-        | ${AXE_ROOT}/bin/tools/json2table.py \
-            -k Images \
-            -f pipe \
-            -c "Architecture,CreationDate,Description,Public,VirtualizationType,Name"
-
+| Tool/Command           | Description     |
+|:---------------------- |:--------------- |
+| kfl                    | Runs the provided command with args, keeping the first line of the original output. (Useful when the first line contains headers: CSV, etc) |
+| axegrep                | Based on `kfl` but keeps the first 2 lines which are generally the AXE output header |
+| axemap                 | Attempts to match text tags to resource IDs for a specific resource type; SG names -to- SG ids |
+| cache                  | Caches the output of the command for up to X mins such that subsequent runs of the same command use the cached output. Useful for caching the output of verbose AWS commands |
+| json2properties        | Converts JSON to Java Properties syntax |
+| json2table             | Attempts to tabularize JSON input into tabular data based on the first keys of a dict or rows in an array |
 

@@ -161,10 +161,7 @@ try:
     # If the action tag doesn't exist, we just stick with the
     # idpauthformsubmiturl above
     for inputtag in formsoup.find_all(re.compile('(FORM|form)')):
-        action = inputtag.get('action')
-        if action:
-            parsedurl = urlparse(saml_idp_url)
-            idpauthformsubmiturl = parsedurl.scheme + "://" + parsedurl.netloc + action
+        idpauthformsubmiturl = inputtag.get('action')
 
     _log.debug('Posting payload to {}'.format(idpauthformsubmiturl))
 

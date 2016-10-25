@@ -43,8 +43,9 @@ import base64
 import json
 import xml.etree.ElementTree as ET
 import re
+import logging
 from bs4 import BeautifulSoup
-from urlparse import urlparse
+from urlparse import urlparse, urljoin
 from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 import os
 import docopt
@@ -71,7 +72,6 @@ try:
     options = docopt.docopt(__doc__)
 
     if options['--debug'] is True:
-        import logging
         _log.setLevel(logging.DEBUG)
 
     if options['--sslverify'] is False:
@@ -161,7 +161,15 @@ try:
     # If the action tag doesn't exist, we just stick with the
     # idpauthformsubmiturl above
     for inputtag in formsoup.find_all(re.compile('(FORM|form)')):
-        idpauthformsubmiturl = inputtag.get('action')
+        action = inputtag.get('action')
+        _log.debug('Form action was [{}]'.format(action))
+        idpauthformsubmiturl = action
+
+        # If the URL we have is relative we need to build a full URL
+        if not idpauthformsubmiturl.startswith('http'):
+            idpauthformsubmiturl = urljoin(saml_idp_url, action)
+            # idpauthformsubmiturl = parsedurl.scheme + "://" + parsedurl.netloc + action
+            _log.debug('Recompiled form URL as [{}]'.format(idpauthformsubmiturl))
 
     _log.debug('Posting payload to {}'.format(idpauthformsubmiturl))
 

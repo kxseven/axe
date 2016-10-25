@@ -201,3 +201,19 @@ There are additional utility scriptlets in `$AXE_ROOT/bin/tools/` which are inte
 | json2properties        | Converts JSON to Java Properties syntax |
 | json2table             | Attempts to tabularize JSON input into tabular data based on the first keys of a dict or rows in an array |
 
+
+## Troubleshooting
+
+### Loading Identity fails due to `boto.exception.NoAuthHandlerFound`
+
+#### Error Message
+
+    boto.exception.NoAuthHandlerFound: No handler was ready to authenticate. 1 handlers were checked. ['HmacAuthV4Handler'] Check your credentials
+    ERROR: IDP Token generation failed
+    ERROR: Valid credentials not found in /tmp/awsmfaCUR8. Token generation failed
+
+#### Fix
+
+ - Run `aws configure` at least once and give it some dummy information so that it will create `~/.aws/credentials`. You can use any values here as they won't be used by the AXE tools
+
+

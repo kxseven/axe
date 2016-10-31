@@ -46,7 +46,7 @@ Some of the additional tools in the AXE repo require use of Ruby Gems, which asi
 | AXE Tool                      | Requirement                        | Notes |
 |:------------------------------|:---------------------------------- |:----- |
 | axe dump-account              | Ruby Gem - terraforming            | [Grab it here](https://github.com/dtan4/terraforming). Can be installed with `gem install terraforming` |
-| axe token-krb5formauth-create | Kerberos support for OS and Python | Can be installed with `sudo apt-get install krb5-userlibkrb5-dev` |
+| axe token-krb5formauth-create | Kerberos support for OS and Python | Can be installed with `sudo apt-get install krb5-user libkrb5-dev` |
 
 
 ## Getting Started with the AXE tool-chain

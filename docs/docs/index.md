@@ -71,7 +71,7 @@ On the assumption that you have a Ubuntu based OS with a working version of git 
  - Install packages needed for Kerberos based authentication
 
         sudo yum install gcc libffi-devel python-devel openssl-devel (RHEL/CentOS)
-        sudo apt-get install python-gssapi python-kerberos python-requests-kerberos libkrb5-dev libssl-dev libffi-dev python-dev (Debian/Ubuntu)
+        sudo apt-get install python-gssapi python-kerberos python-requests-kerberos libkrb5-dev libssl-dev libffi-dev python-dev python-simplejson (Debian/Ubuntu)
 
  - Activate the local Python
 

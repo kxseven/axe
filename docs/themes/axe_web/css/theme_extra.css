@@ -211,3 +211,6 @@ hr {
     margin: 5mm 5mm 5mm 5mm;
 }
 
+li.toctree-l3:first-child {
+    display: none;
+}

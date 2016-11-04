@@ -22,4 +22,4 @@ pages:
     - 'LIB: logger': 'dev/lib/axeutils/logger.md'
     - 'LIB: config': 'dev/lib/axeutils/config.md'
 repo_url: 'https://bitbucket.org/kxseven/axe'
-theme_dir: 'themes/version1_web'
+theme_dir: 'themes/axe_web'

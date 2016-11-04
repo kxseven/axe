@@ -74,9 +74,12 @@ def multikeysort(items, columns):
                   (itemgetter(col.strip()), 1)) for col in columns]
     def comparer(left, right):
         for fn, mult in comparers:
-            result = cmp(fn(left), fn(right))
-            if result:
-                return mult * result
+            try:
+                result = cmp(fn(left), fn(right))
+                if result:
+                    return mult * result
+            except KeyError:
+                pass
         else:
             return 0
     return sorted(items, cmp=comparer)
@@ -103,6 +106,11 @@ def main(options):
         data = f.readlines()
         content = ''.join(data)
         j = json.loads(content, object_pairs_hook=OrderedDict)
+
+        # Check if we have any data
+        if len(j) < 1:
+            _log.error('No data found for table')
+            clean_up(-1)
 
         keylist = []
         if not isinstance(j, (list, tuple)):

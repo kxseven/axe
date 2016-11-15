@@ -9,7 +9,15 @@ filter="$2"
 . ${AXE_ROOT}/etc/axerc
 
 # Tidy the filter so that it can be used with grep
-grep_filter="$(echo "${filter}" | tr ',' '|' | tr -d ' ')"
+grep_filter="$(echo "${filter}" \
+    | tr ',' '|' \
+    | tr -d ' ' \
+    | tr -d '\r' \
+    | tr '\n' '|' \
+    | tr -s '|' \
+    | sed -e "s/^|//g" \
+    | sed -e "s/|$//g"\
+    )"
 
 # Count the number of patterns we have in our filter
 num_patterns=$(echo "${grep_filter}" | awk -F '|' '{print NF}')

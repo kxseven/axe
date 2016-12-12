@@ -1,0 +1,143 @@
+#!/usr/bin/env python
+
+"""
+Basic script to add the specified SG to an instance if the matching SG is
+found currently associated
+
+Usage:
+    axe-sg-add -g <sg-id> [options]
+    axe-sg-add ( -h | --help )
+
+Options:
+    -s <searchfor>, --searchfor=<sg-id>
+                         Only action on instances that already have this SG
+                         associated with them
+    -g <sg-id>, --sg-id=sg-id
+                         The new SecurityGroup ID to add to the instance
+    -h, --help           Show this help message and exit
+    --debug              Show more verbose logging
+
+"""
+from future.utils import iteritems
+
+import os
+import axeutils
+from axeutils.logger import AxeLog
+from axeutils.config import get_config_from_file
+from axeutils import check_imports, clean_up
+import docopt
+from tabulate import tabulate
+from operator import itemgetter
+
+###############################################################################
+# CONFIG - Begin
+###############################################################################
+
+###############################################################################
+# CONFIG - End (Do Not Edit Below)
+###############################################################################
+
+_log = AxeLog(__file__)
+check_imports()
+
+from boto import ec2
+
+###############################################################################
+# CONFIG - Begin
+###############################################################################
+
+
+
+###############################################################################
+# CONFIG - End (Do Not Edit Below)
+###############################################################################
+
+###############################################################################
+# Functions
+###############################################################################
+
+
+def main(options):
+    """
+    The main program function
+    """
+
+    if options['--debug'] is True:
+        import logging
+        _log.setLevel(logging.DEBUG)
+
+    for key, value in iteritems(options):
+        _log.debug('command-line options: {}: {}'.format(key, value))
+
+    try:
+
+        # Even though the Boto lib can use the environment variables we'll
+        # import some for easier re-use in this script
+        aws_region = os.getenv('AWS_DEFAULT_REGION')
+        ec2_conn = ec2.connect_to_region(aws_region)
+
+        reservations = ec2_conn.get_all_reservations()
+        modified_count = 0
+
+        for r in reservations:
+            i = r.instances[0]
+
+            _log.debug('Checking instance {}'.format(i.id))
+            existing_groups = i.groups
+            existing_sgids = [g.id for g in existing_groups]
+            _log.debug('Currently has SGs {}'.format(existing_sgids))
+
+            if options['--sg-id'] not in existing_sgids:
+                existing_sgids.append(options['--sg-id'])
+
+                if options['--searchfor'] is not None:
+                    if options['--searchfor'] in existing_sgids:
+                        _log.info('Instance {} has matching SG'.format(i.id))
+
+                        if len(i.interfaces) > 1:
+                            _log.info('Instance {} has multiple ENIs. Looping through interfaces instead'.format(i.id))
+                            for eni in i.interfaces:
+                                eni_sgids = [ g.id for g in eni.groups ]
+                                eni_sgids.append(options['--sg-id'])
+                                ec2_conn.modify_network_interface_attribute(eni.id, 'groupSet', eni_sgids, dry_run=False)
+                        else:
+                            _log.info('Instance {} being modified. New SG list will be {}'.format(i.id, existing_sgids))
+                            i.modify_attribute('groupSet', existing_sgids, dry_run=False)
+
+                        modified_count += 1
+
+                else:
+
+                    if len(i.interfaces) > 1:
+                        _log.info('Instance {} has multiple ENIs. Looping through interfaces instead'.format(i.id))
+                        for eni in i.interfaces:
+                            eni_sgids = [ g.id for g in eni.groups ]
+                            eni_sgids.append(options['--sg-id'])
+                            ec2_conn.modify_network_interface_attribute(eni.id, 'groupSet', eni_sgids, dry_run=False)
+                    else:
+                        _log.info('Instance {} being modified. New SG list will be {}'.format(i.id, existing_sgids))
+                        i.modify_attribute('groupSet', existing_sgids, dry_run=False)
+
+                    modified_count += 1
+
+            else:
+                _log.info('SG already associated with Instance {}. No action needed'.format(i.id))
+
+        _log.info('Done. {} instances modified'.format(modified_count))
+
+    except AssertionError as e:
+        _log.warn(e)
+        clean_up(-1)
+
+    clean_up()
+
+
+if __name__ == "__main__":
+
+    try:
+        options = docopt.docopt(__doc__)
+        main(options)
+
+    # Handle invalid options
+    except docopt.DocoptExit as e:
+        print(e.message)

@@ -22,6 +22,8 @@ Options:
                          specified VPC
     -g <sg-id>, --sg-id=sg-id
                          The new SecurityGroup ID to add to the instance
+    -y, --yes            Required to actually do anything. Otherwise it just
+                         lists what would have been affected [default: False]
     -h, --help           Show this help message and exit
     --debug              Show more verbose logging
 
@@ -128,20 +130,30 @@ def main(options):
         modified_count = 0
         for i in all_instances:
 
-
             if len(i.interfaces) > 1:
+
                 _log.info('Instance {} has multiple ENIs. Looping through interfaces instead'.format(i.id))
                 for eni in i.interfaces:
                     eni_sgids = [ g.id for g in eni.groups ]
                     eni_sgids.append(options['--sg-id'])
-                    ec2_conn.modify_network_interface_attribute(eni.id, 'groupSet', eni_sgids, dry_run=False)
+
+                    if options['--yes'] is True:
+                        ec2_conn.modify_network_interface_attribute(eni.id, 'groupSet', eni_sgids, dry_run=False)
+                        modified_count += 1
+                    else:
+                        _log.warning('Dry-run mode active not making any change this run')
+
             else:
+
                 eni_sgids = [ g.id for g in i.groups ]
                 eni_sgids.append(options['--sg-id'])
                 _log.info('Instance {} being modified. New SG list will be {}'.format(i.id, eni_sgids))
-                i.modify_attribute('groupSet', eni_sgids, dry_run=False)
 
-            modified_count += 1
+                if options['--yes'] is True:
+                    i.modify_attribute('groupSet', eni_sgids, dry_run=False)
+                    modified_count += 1
+                else:
+                    _log.warning('Dry-run mode active not making any change this run')
 
         _log.info('Done. {} instances modified'.format(modified_count))
 

@@ -10,7 +10,7 @@ workstation. You can test this with
     'klist'            - List existing Kerberos tokens
 
 Usage:
-    axe-token-krb5formauth-create <aws_region> <saml_idp_url> <idp_params> <principal> <creds_file> [ options ]
+    axe-token-krb5formauth-create <aws_region> <saml_idp_url> <idp_params> <principal> <creds_file> [<token_duration>] [ options ]
     axe-token-krb5formauth-create ( -h | --help )
 
 Arguments:
@@ -23,6 +23,8 @@ Arguments:
   saml_idp_url      The IDP/SAML URL that is used to trigger authentication
   principal         The identity to authenticate with in the form of user@REALM
   creds_file        The filename to store credentials in if successful
+  token_duration    The duration in seconds that a requested token is valid for
+                    from the time of successful authentication [default: 3600]
 
 Options:
   --sslverify       Whether or not to validate the SSL cert from the SAML URL.
@@ -59,7 +61,6 @@ from pprint import pprint as pp
 
 CONST_DIR_TMP = "/tmp"
 CONST_AXE_ROOT = os.getenv('AXE_ROOT', '')
-CONST_STS_TOKEN_DURATION = 3600
 
 ###############################################################################
 # CONFIG - End (Do Not Edit Below)
@@ -88,6 +89,10 @@ try:
     ssl_verification = options['--sslverify']
     aws_config_file = options['<creds_file>']
     aws_region = options['<aws_region>']
+
+    if principal == "<ask>":
+        print('You can get your Realm Principal from using the "klist | grep \'Default principal:\'" command')
+        principal = raw_input('Enter value for Realm Principal: ')
 
     # Parse any form fields and ask user for input if needed
     payload = {}
@@ -275,10 +280,14 @@ try:
         role_arn = awsroles[0].split(',')[0]
         principal_arn = awsroles[0].split(',')[1]
 
-
     # Use the assertion to get an AWS STS token using Assume Role with SAML
     conn = boto.sts.connect_to_region(aws_region)
-    token = conn.assume_role_with_saml(role_arn, principal_arn, assertion)
+    token = conn.assume_role_with_saml(
+        role_arn,
+        principal_arn,
+        assertion,
+        duration_seconds=options['<token_duration>']
+        )
 
     _log.debug('Dumping STS Token')
     _log.debug('aws_access_key_id {}'.format(token.credentials.access_key))

@@ -128,6 +128,7 @@ def main(options):
         modified_count = 0
         for i in all_instances:
 
+
             if len(i.interfaces) > 1:
                 _log.info('Instance {} has multiple ENIs. Looping through interfaces instead'.format(i.id))
                 for eni in i.interfaces:
@@ -135,8 +136,10 @@ def main(options):
                     eni_sgids.append(options['--sg-id'])
                     ec2_conn.modify_network_interface_attribute(eni.id, 'groupSet', eni_sgids, dry_run=False)
             else:
-                _log.info('Instance {} being modified. New SG list will be {}'.format(i.id, existing_sgids))
-                i.modify_attribute('groupSet', existing_sgids, dry_run=False)
+                eni_sgids = [ g.id for g in i.groups ]
+                eni_sgids.append(options['--sg-id'])
+                _log.info('Instance {} being modified. New SG list will be {}'.format(i.id, eni_sgids))
+                i.modify_attribute('groupSet', eni_sgids, dry_run=False)
 
             modified_count += 1
 

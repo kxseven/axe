@@ -54,15 +54,13 @@ trap cleanup 0 1 2 3 15
 # Main Script
 ##############################################################################
 
-BROWSER=$(which x-www-browser)
-
-[ -z $BROWSER ] && echo "No default browser found (using x-www-browser). Maybe its time to use a real OS" && exit 1
-
 cleanup() {
     _log "$LINENO" "Shutdown of local DOCS service"
     kill -9 $pid_mkdocs
 }
 
+BROWSER=$(which x-www-browser)
+[ -z $BROWSER ] && echo "No default browser found (using x-www-browser). Maybe its time to use a real OS" && exit 1
 
 # Unset any proxies as it's only localhost we're connecting to
 unset http_proxy

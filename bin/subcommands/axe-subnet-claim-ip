@@ -58,10 +58,10 @@ trap cleanup 1 2 3 15
 
 show_usage() {
     cat <<EOF
-usage: $CONST_SCRIPT_NAME [--help] [-s <SUBNET-ID>]
+usage: $CONST_SCRIPT_NAME [--help] [-s <SUBNET-ID>] [num-ips]
 
-Simple utility script to claim and then release an available IP address from
-the specified subnet-id by allocating and then deleting an ENI in the same
+Simple utility script to claim and then release available Private IP addresses
+from the specified subnet-id by allocating and then deleting an ENI in the same
 subnet
 
 Useful if you need to determine which Private VPC adddresses can be used as
@@ -84,8 +84,11 @@ then
     exit 0
 fi
 
-# As there's only 1 option it's value will be in $2
+# subnet-id will be in $2
 subnet_id="${2:-none}"
+
+# num ips will be in $3
+num_private_ips="${3:-1}"
 
 # show help for no arguments if stdin is a terminal
 if [ "${subnet_id}" == 'none' ]
@@ -101,9 +104,7 @@ claim_ip_from_subnet() {
     # Create an ENI
     _log "$LINENO" "Requesting IP in subnet ${subnet_id}"
     buffer=$(mktemp ${PROJECT_ROOT}/tmp/eni-buffer.XXXXXXX)
-    aws ec2 create-network-interface --subnet-id "${subnet_id}" --output=json \
-        | tee "${buffer}" \
-        | jq '.'
+    aws ec2 create-network-interface --subnet-id "${subnet_id}" --output=json > "${buffer}"
 
     # Parse the info
     eni_id=$(cat "${buffer}" | jq -r '.NetworkInterface["NetworkInterfaceId"]' | wash)
@@ -126,4 +127,6 @@ claim_ip_from_subnet() {
 # Main Script
 ##############################################################################
 
-claim_ip_from_subnet "${subnet_id}"
+for counter in $(seq 1 ${num_private_ips}); do
+    claim_ip_from_subnet "${subnet_id}"
+done

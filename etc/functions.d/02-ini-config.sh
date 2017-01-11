@@ -18,7 +18,7 @@ _ini_cfg_parser () {
     ini[${#ini[*]} + 1]='}'                  # add the last brace
     eval "$(echo "${ini[*]}")"               # eval the result to load and import the content
     # Now build a list of section names and expose it as _ini_cfg_get_sections
-    _ini_cfg_sections="$(echo "${ini[*]}" | grep -oE '^cfg\.section.*\(' | sed -e 's/\ (//g')"
+    _ini_cfg_sections="$(echo "${ini[*]}" | grep -oE '^cfg\.section.*\(' | sed -e 's/\ (//g' | sed -e 's/ /_/g')"
     export _ini_cfg_sections
 }
 

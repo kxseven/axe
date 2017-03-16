@@ -53,5 +53,5 @@ _log_event() {
 # A helper function that can be used to print timestamps to strings printed to
 # output streams aimed at mimicing the 'ts' utility if it's not present
 _ts() {
-    cat | xargs -i printf "$(date +'%Y-%m-%dT%H:%M:%S%z') {}\n"
+    cat | while IFS= read -r line; do printf '%s %s %s\n' "$(date +'%Y-%m-%dT%H:%M:%S%z')" "$line" "$(echo -e ${__no_color})"; done
 }

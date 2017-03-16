@@ -59,7 +59,12 @@ show_usage() {
 usage: $CONST_SCRIPT_NAME [--help] [-d <DIR>]
 
 Attempts to dump all of the AWS account in Terraform format to the specified
-directory (defaults to current working directory)
+directory (defaults to current working directory). A sub-directory is created
+for each available AWS region.
+
+It is normal for errors to be generated during a run if a specific resource
+is not supported in that region or if permissions for specific resources are
+unavailable to the API user performing the dump
 
 This wrapper script relies on the Terraforming tool available from
 https://github.com/dtan4/terraforming and will not function without it.
@@ -71,6 +76,51 @@ EOF
 cleanup() {
     echo "Exiting."
     exit 1
+}
+
+
+dump_global_to_path() {
+
+    local dump_path=$1
+    local resources=
+
+    resources=$(terraforming | grep terraforming | awk '{print $2}' | grep -v help | grep -P '^iam|^r53')
+
+    [ -d "${dump_path}" ] || mkdir -p "${dump_path}"
+
+    _log "$LINENO" "Generate an initial tfstate"
+    cd "${dump_path}" && terraforming asg --tfstate > terraform.tfstate
+
+    _log "$LINENO" "Dumping the state for each global resource type"
+    for res in $resources; do
+        _log "$LINENO" "Dumping ${res}"
+        cd "${dump_path}" && terraforming $res --tfstate --merge=terraform.tfstate --overwrite
+        cd "${dump_path}" && terraforming $res > "aws-${res}.tf"
+    done
+
+}
+
+
+dump_regional_to_path() {
+
+    local aws_region=$1
+    local dump_path=$2
+    local resources=
+
+    resources=$(terraforming | grep terraforming | awk '{print $2}' | grep -v help | grep -v -P '^iam|^r53')
+
+    [ -d "${dump_path}" ] || mkdir -p "${dump_path}"
+
+    _log "$LINENO" "Generate an initial tfstate for ${current_region}"
+    cd "${dump_path}" && AWS_DEFAULT_REGION=${aws_region} terraforming asg --tfstate > terraform.tfstate
+
+    _log "$LINENO" "Dumping the state for each resource type available in ${current_region}"
+    for res in $resources; do
+        _log "$LINENO" "Dumping ${res}"
+        cd "${dump_path}" && AWS_DEFAULT_REGION=${aws_region} terraforming $res --tfstate --merge=terraform.tfstate --overwrite
+        cd "${dump_path}" && AWS_DEFAULT_REGION=${aws_region} terraforming $res > "aws-${res}.tf"
+    done
+
 }
 
 
@@ -98,22 +148,25 @@ fi
 _log "$LINENO" "Ensuring target path exists"
 [ -d "${output_dir}" ] || mkdir -p "${output_dir}"
 
+aws_region_list="$(aws ec2 describe-regions | jq -r '.[] | .[] | .RegionName')"
+
 # Dipshit detection
 if [ -f "${output_dir}/terraform.tfstate" ]; then
     _log "$LINENO" "Existing terraform.tfstate file found! Please remove it"
     cleanup
 fi
 
-resources=$(terraforming | grep terraforming | awk '{print $2}' | grep -v help)
+dump_global_to_path "${output_dir}/global"
 
-_log "$LINENO" "Generate an initial tfstate"
-terraforming asg --tfstate > terraform.tfstate
-
-_log "$LINENO" "Dumping the state for each resource type available"
-for res in $resources; do
-    _log "$LINENO" "Dumping ${res}"
-    terraforming $res --tfstate --merge=terraform.tfstate --overwrite
-    terraforming $res > "aws-${res}.tf"
+pids=""
+for current_region in ${aws_region_list}; do
+    _log "$LINENO" "Spawning background process regional resources for ${current_region}"
+    dump_regional_to_path "${current_region}" "${output_dir}/${current_region}" &
+    pids="$pids $!"
 done
 
+_log "$LINENO" "Waiting on background processes (${pids}) to complete"
+wait ${pids}
+
 _log "$LINENO" "Done"
+

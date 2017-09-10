@@ -55,13 +55,13 @@ ip_from_instance_name() {
     _log "$LINENO" "Attempting to resolve target ${target}"
 
     local private_ip="$(aws ec2 describe-instances --filters "Name=tag-key, Values=Name" "Name=tag-value, Values=${target}" --output=json \
-                        | $AXE_ROOT/bin/tools/json2properties.py \
+                        | $AXE_ROOT/bin/tools/json2properties \
                         | grep 'Reservations.0.Instances.0.PrivateIpAddress' \
                         | awk -F'=' '{print $2}' \
                         | tr -d '\"')"
 
     local public_ip="$(aws ec2 describe-instances --filters "Name=tag-key, Values=Name" "Name=tag-value, Values=${target}" --output=json \
-                        | $AXE_ROOT/bin/tools/json2properties.py \
+                        | $AXE_ROOT/bin/tools/json2properties \
                         | grep 'Reservations.0.Instances.0.PublicIpAddress' \
                         | awk -F'=' '{print $2}' \
                         | tr -d '\"')"

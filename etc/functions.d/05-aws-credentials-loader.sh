@@ -33,6 +33,32 @@ _load_basic_credentials() {
 }
 
 
+_load_credentials_from_json() {
+
+    AWS_CONFIG_FILE=$(mktemp /tmp/awsmfaXXXX)
+
+    jq '.Credentials | {
+        AWS_ACCESS_KEY_ID: (.AccessKeyId),
+        AWS_SECRET_ACCESS_KEY: (.SecretAccessKey),
+        AWS_SESSION_TOKEN: ((.SessionToken) // ""),
+        AWS_SECURITY_TOKEN: ((.SessionToken) // ""),
+        AWS_EXPIRY: ((.Expiration) // "")
+        }' "${1}" \
+        | json2properties > ${AWS_CONFIG_FILE}
+
+    . ${AWS_CONFIG_FILE}
+
+    # Now set the token expiry time so that it can be used for the PS1 prompt
+    let AWS_TOKEN_EXPIRY=$(date +"%s" --date "${AWS_EXPIRY}")
+    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date @${AWS_TOKEN_EXPIRY})
+    echo -e "INFO : ${__fg_yellow}AWS_TOKEN_EXPIRES......${__no_color} $expiry_time"
+
+    export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
+    export AWS_SECURITY_TOKEN AWS_TOKEN_EXPIRY AWS_SESSION_TOKEN
+
+}
+
+
 # Helper function to get API keys using MFA token
 _load_mfaauth_credentials() {
 
@@ -49,12 +75,17 @@ _load_mfaauth_credentials() {
 
     echo -e -n "INFO : ${__fg_red}MFA Account Detected... ${__no_color}"
     read -p "Please specify the MFA PIN Now: " response
-    ${PROJECT_ROOT}/bin/subcommands/axe-token-mfaauth-create "$aws_access_key_id" "$aws_secret_access_key" "$AWS_MFA_ID $response" > $AWS_CONFIG_FILE
+    ${PROJECT_ROOT}/bin/subcommands/axe-token-mfaauth-create \
+        "$aws_access_key_id" \
+        "$aws_secret_access_key" \
+        "$AWS_MFA_ID" \
+        "$response" \
+        > $AWS_CONFIG_FILE
 
-    local user_token="$(grep -h -i aws_security_token "$AWS_CONFIG_FILE" | awk '{print $2}')"
-
-    AWS_SECURITY_TOKEN="$user_token"
-    AWS_SESSION_TOKEN="$user_token"
+    AWS_ACCESS_KEY_ID="$(grep -h aws_access_key_id "$AWS_CONFIG_FILE" | awk '{print $2}')"
+    AWS_SECRET_ACCESS_KEY="$(grep -h aws_secret_access_key "$AWS_CONFIG_FILE" | awk '{print $2}')"
+    AWS_SECURITY_TOKEN="$(grep -h -i aws_security_token "$AWS_CONFIG_FILE" | awk '{print $2}')"
+    AWS_SESSION_TOKEN="$(grep -h -i aws_security_token "$AWS_CONFIG_FILE" | awk '{print $2}')"
 
     echo -e "INFO : ${__fg_yellow}AWS_MFA_ID.............${__no_color} $AWS_MFA_ID"
 

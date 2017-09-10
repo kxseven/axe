@@ -1,0 +1,42 @@
+#!/bin/bash
+
+COMMANDS=$(axe -c | grep -v docs | grep -v dump)
+
+for axe_cmd in ${COMMANDS}; do
+
+cat > "axe-${axe_cmd}.md" <<-EOF
+
+## ${axe_cmd}
+
+Description
+
+### Command
+
++++
+$(axe ${axe_cmd} --help)
++++
+
+### Example Usage
+
+**Simple**
++++
+\$ axe ${axe_cmd}
+$(axe ${axe_cmd})
++++
+
+**Markdown**
++++
+\$ axe ${axe_cmd} -f pipe
++++
+
+$(axe ${axe_cmd} -f pipe)
+
+
+### Notes
+
+ - A set of valid AWS credentials must be loaded for this to work
+
+EOF
+
+
+done

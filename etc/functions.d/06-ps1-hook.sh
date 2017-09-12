@@ -1,0 +1,124 @@
+# We will attempt to create a PS1 that displays AWS identity when active
+
+_AXE_OLDPROMPT=
+_AXE_OLDPS1=
+
+__separator=""
+
+# Segment colors
+__axe_segment="$(__get_color_escape ${__purple} ${__white})"
+__axe_next_sep="$(__get_color_escape ${__yellow} ${__purple})"
+
+__date_segment="$(__get_color_escape ${__yellow} ${__black})"
+__date_next_sep="$(__get_color_escape ${__light_orange} ${__yellow})"
+
+__awsid_segment="$(__get_color_escape ${__light_orange} ${__black})"
+__awsid_next_sep="$(__get_color_escape ${__dark_orange} ${__light_orange})"
+
+__awsregion_segment="$(__get_color_escape ${__dark_orange} ${__white})"
+__awsregion_next_sep="$(__get_color_escape ${__pink} ${__dark_orange})"
+
+__awstoken_valid_segment="$(__get_color_escape ${__dark_green} ${__white})"
+__awstoken_valid_next_sep="$(__get_color_escape ${__dark_green} ${__dark_orange})"
+
+__awstoken_expired_segment="$(__get_color_escape ${__red} ${__white})"
+__awstoken_expired_next_sep="$(__get_color_escape ${__red} ${__dark_orange})"
+
+
+# Attempts to retrieve the current AWS identity name
+_get_segment_aws_id_name() {
+    local segment_icon="$(echo -e "\uf007")"
+    local segment_value="$(echo ${AWS_ID_NAME})"
+    if [ ! -z $segment_value ]
+    then
+        echo "${__date_next_sep}${__separator}${__awsid_segment} ${segment_icon} ${segment_value} "
+    fi
+}
+
+
+# Attempts to retrieve the current AWS region
+_get_segment_aws_region() {
+    local segment_icon="$(echo -e "\uf0c2")"
+    local segment_value="$(echo ${AWS_DEFAULT_REGION})"
+    if [ ! -z $segment_value ]
+    then
+        echo "${__awsid_next_sep}${__separator}${__awsregion_segment} ${segment_icon} ${segment_value} "
+    fi
+}
+
+
+# Attempts to retrieve the current AWS identity name
+_get_segment_aws_token_expiry() {
+
+    local segment_icon="$(echo -e "\uf017")"
+    if [ ! -z ${AWS_TOKEN_EXPIRY} ]; then
+        local dt_now="$(date)"
+        local dt_expiry="$(date --date "@${AWS_TOKEN_EXPIRY}")"
+        local delta=$(( $(date -d "$dt_expiry" +%s) - $(date -d "$dt_now" +%s) ))
+        if [ ${delta} -gt 0 ]; then
+            local segment_value="$(date -d @$(( $(date -d "$dt_expiry" +%s) - $(date -d "$dt_now" +%s) )) -u +'%H:%M:%S')"
+            local segment_style="${__awstoken_valid_next_sep}${__separator}${__awstoken_valid_segment}"
+        else
+            local segment_value="EXPIRED"
+            local segment_style="${__awstoken_expired_next_sep}${__separator}${__awstoken_expired_segment}"
+        fi
+        if [ ! -z $segment_value ]; then
+            echo "${segment_style} ${segment_icon} ${segment_value} "
+        fi
+    fi
+}
+
+
+_get_segment_axe() {
+    echo "${__axe_segment} AXE "
+}
+
+
+_get_segment_datetime() {
+    echo "${__axe_next_sep}${__separator}${__date_segment}"' \d \t '
+}
+
+
+_update_axe_ps1() {
+
+    PS1="$(_get_segment_axe)"
+    PS1="${PS1}$(_get_segment_datetime)"
+    PS1="${PS1}$(_get_segment_aws_id_name)"
+    PS1="${PS1}$(_get_segment_aws_region)"
+    PS1="${PS1}$(_get_segment_aws_token_expiry)"
+    PS1="${PS1}${__reset}"'\n\\$ '
+    export PS1
+
+}
+
+
+_save_prompt() {
+    if [ ! -z ${PROMPT} ]; then
+        export _AXE_OLDPROMPT="${PROMPT}"
+    else
+        export _AXE_OLDPROMPT="${PROMPT_COMMAND}"
+    fi
+    export _AXE_OLDPS1="${PS1}"
+}
+
+restore_prompt() {
+    unset PROMPT_COMMAND PROMPT PS1
+    export PROMPT_COMMAND="${_AXE_OLDPROMPT}"
+    export PROMPT="${_AXE_OLDPROMPT}"
+    export PS1="${_AXE_OLDPS1}"
+}
+
+
+axe_prompt() {
+    unset PROMPT_COMMAND PROMPT
+    export PROMPT_COMMAND="_update_axe_ps1; $PROMPT_COMMAND"
+    export PROMPT="_update_axe_ps1; $PROMPT"
+}
+
+
+if [ ! -z "$BASH_VERSION" ]; then
+    _save_prompt
+    echo "You can restore the previous prompt with 'restore_prompt' if you prefer or do not have patched fonts available and re-enable the custom prompt with 'axe_prompt'"
+    axe_prompt
+fi
+

@@ -47,14 +47,3 @@ _print_head_l2() {
 
 }
 
-# Simple badge creator
-_badge() {
-    local badge_name=$1
-    local badge_text=$2
-    local badge_text_fg_color="${3:-$__fg_white}"
-    local badge_text_bg_color="${4:-$__bg_dark_gray}"
-    local badge_name_fg_color="${5:-$__fg_black}"
-    local badge_name_bg_color="${6:-$__bg_light_gray}"
-
-    echo -e "${badge_name_fg_color}${badge_name_bg_color} ${badge_name} ${badge_text_fg_color}${badge_text_bg_color} ${badge_text} ${__no_color}"
-}

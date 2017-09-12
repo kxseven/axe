@@ -49,7 +49,6 @@ _get_segment_aws_region() {
 
 # Attempts to retrieve the current AWS identity name
 _get_segment_aws_token_expiry() {
-
     local segment_icon="$(echo -e "\uf017")"
     if [ ! -z ${AWS_TOKEN_EXPIRY} ]; then
         local dt_now="$(date)"
@@ -80,15 +79,13 @@ _get_segment_datetime() {
 
 
 _update_axe_ps1() {
-
-    PS1="$(_get_segment_axe)"
+    PS1="\n$(_get_segment_axe)"
     PS1="${PS1}$(_get_segment_datetime)"
     PS1="${PS1}$(_get_segment_aws_id_name)"
     PS1="${PS1}$(_get_segment_aws_region)"
     PS1="${PS1}$(_get_segment_aws_token_expiry)"
     PS1="${PS1}${__reset}"'\n\\$ '
     export PS1
-
 }
 
 
@@ -116,9 +113,13 @@ axe_prompt() {
 }
 
 
-if [ ! -z "$BASH_VERSION" ]; then
-    _save_prompt
-    echo "You can restore the previous prompt with 'restore_prompt' if you prefer or do not have patched fonts available and re-enable the custom prompt with 'axe_prompt'"
-    axe_prompt
+# Activate promt only if we're a terminal and it was the starting shell
+if [[ -t 1 ]] && [[ "bash" == "${0##*/}" ]]; then
+    if [ ! -z "$BASH_VERSION" ]; then
+        _save_prompt
+        echo "You can restore the previous prompt with 'restore_prompt' if you prefer or do not have patched fonts available and re-enable the custom prompt with 'axe_prompt'"
+        axe_prompt
+    fi
 fi
+
 

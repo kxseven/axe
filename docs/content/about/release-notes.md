@@ -5,6 +5,10 @@ The change-log below has been generated using the Git history in the repo.
 
 ### Latest
 
+
+### v1.1
+
+ - Updated documentation for PS1 hook
  - Updated docs for new PS1 hook
  - Updated PS1 hook to only trigger from initial shell loading
  - Added PS1 hook for a powerline type experience when using a supported (Bash) shell

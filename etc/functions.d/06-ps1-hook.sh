@@ -117,7 +117,9 @@ axe_prompt() {
 if [[ -t 1 ]] && [[ "bash" == "${0##*/}" ]]; then
     if [ ! -z "$BASH_VERSION" ]; then
         _save_prompt
-        echo "You can restore the previous prompt with 'restore_prompt' if you prefer or do not have patched fonts available and re-enable the custom prompt with 'axe_prompt'"
+        echo "You can restore the previous prompt with 'restore_prompt' if you"
+        echo "prefer or do not have patched fonts available and re-enable the "
+        echo "custom prompt with 'axe_prompt'"
         axe_prompt
     fi
 fi

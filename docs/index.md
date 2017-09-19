@@ -26,11 +26,11 @@ The AXE toolset is seperated into distinct components;
      + `$AWS_ACCESS_KEY_ID`
      + `$AWS_SECRET_ACCESS_KEY`
 
+![AXE STS Token Valid](media/images/axe_cred_token_valid.png)
+
  - AXE: use some of the commands provided to interact with your virtual infrastructure
  - Use any other tools that support loading credentials from the shell envionment; [Terraform], [saws], [terraforming], etc
- - The CLI helper will also show the active AWS profile as well as the remaining time on the STS token if using MFA or Federated Access
-
-![AXE STS Token Valid](media/images/axe_cred_token_valid.png)
+ - The CLI helper will also show the active AWS profile as well as the remaining time on the STS token if using MFA or Federated Access (Suggestions for better colors welcome)
 
 ![AXE STS Token Expired](media/images/axe_cred_token_expired.png)
 

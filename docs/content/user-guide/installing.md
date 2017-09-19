@@ -47,6 +47,7 @@ Some of the additional tools in the AXE repo require additional dependencies.
     **CentOS/RHEL**
     ```
     $ sudo yum install \
+        krb5-devel \
         python-gssapi \
         python-kerberos \
         python-requests-kerberos \
@@ -58,6 +59,7 @@ Some of the additional tools in the AXE repo require additional dependencies.
     **Debian/Ubuntu**
     ```
     $ sudo apt-get install \
+        libkrb5-dev \
         python-gssapi \
         python-kerberos \
         python-requests-kerberos \

@@ -1,0 +1,12 @@
+#cmd: ec2 describe-images --owners self
+#sort: Name,CreationDate
+
+.Images | .[]? | {
+    Name,
+    CreationDate,
+    ImageId,
+    Architecture,
+    VirtualizationType,
+    Description: (.Description // "None"),
+    Public
+}

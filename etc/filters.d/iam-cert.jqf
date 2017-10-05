@@ -1,0 +1,10 @@
+#cmd: iam list-server-certificates
+#sort: ServerCertificateName,Expiration,UploadDate,Arn
+
+.ServerCertificateMetadataList[] | {
+    ServerCertificateName,
+    ServerCertificateId,
+    Expiration,
+    UploadDate,
+    Arn
+}

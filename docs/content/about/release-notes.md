@@ -3,8 +3,13 @@
 The change-log below has been generated using the Git history in the repo.
 
 
-### Latest
+### v1.2
 
+ - Legacy sub-command cleanup and updates to docs to match
+ - Removed legacy commands whose functionalist is now provided by new "list" sub-command
+ - Adeed BASH completion for new axe-list sub-command
+ - Added generic "list" sub-command to support more extensible filtering of resources
+ - Updated RN
 
 ### v1.1
 

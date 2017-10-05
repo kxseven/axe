@@ -1,0 +1,28 @@
+#cmd: ec2 describe-instances
+#sort: VpcId,AZ,SubnetId,Name
+
+.Reservations[]["Instances"] | .[]? | {
+    VpcId,
+    AZ: (.Placement|.AvailabilityZone),
+    SubnetId,
+    Name: ((.Tags[]?|select(.Key=="Name")|.Value) // "None"),
+    BU: ((.Tags[]?|select(.Key=="BU")|.Value) // "None"),
+    BUSub: ((.Tags[]?|select(.Key=="BUSub")|.Value) // "None"),
+    SystemFunction: ((.Tags[]?|select(.Key=="SystemFunction")|.Value) // "None"),
+    Role: ((.Tags[]?|select(.Key=="Role")|.Value) // "None"),
+    OS: ((.Tags[]?|select(.Key=="OS")|.Value) // "None"),
+    Lifecycle: ((.Tags[]?|select(.Key=="Lifecycle")|.Value) // "None"),
+    State: (.State|.Name),
+    InstanceId,
+    PrivateIpAddress,
+    InstanceType,
+    KeyName,
+    ImageId,
+    Virt: .VirtualizationType,
+    PublicIpAddress: (.PublicIpAddress // "None"),
+    Monitoring: (.Monitoring|.State),
+    auto_start: ((.Tags[]?|select(.Key=="auto:start")|.Value) // "None"),
+    auto_stop: ((.Tags[]?|select(.Key=="auto:stop")|.Value) // "None"),
+    Description: ((.Tags[]?|select(.Key | contains("Description"))|.Value) // "None")
+}
+

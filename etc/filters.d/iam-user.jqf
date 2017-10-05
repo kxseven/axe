@@ -1,0 +1,10 @@
+#cmd: iam list-users
+#sort: UserName,CreateDate
+
+.Users | .[] | {
+    UserName,
+    CreateDate,
+    UserId,
+    PasswordLastUsed,
+    Arn
+}

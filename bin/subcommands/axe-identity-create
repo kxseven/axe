@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Simple VPC report
+# Simple credentials creation
 #
 
 ##############################################################################
@@ -56,12 +56,9 @@ trap cleanup 1 2 3 15
 
 show_usage() {
     cat <<EOF
-usage: $CONST_SCRIPT_NAME [--help] [-f <FORMAT>]
+usage: $CONST_SCRIPT_NAME [--help]
 
-The output format can be changed by using one of the supported formats:
-
-plain, simple, grid, fancy_grid, pipe, orgtbl, rst, mediawiki, html, latex,
-latex_booktabs, tsv (default: simple)
+Simple wrapper to create a basic AXE profile
 
 EOF
 }
@@ -81,16 +78,41 @@ then
 fi
 
 # As there's only 1 option it's value will be in $2
-output_format="${2:-simple}"
+id_default_region="${3:-'eu-west-1'}"
 
 
 ##############################################################################
 # Main Script
 ##############################################################################
 
-cache aws ec2 describe-vpcs --output=json \
-    | jq ' .Vpcs[] | { VpcId, CidrBlock, Name: ((.Tags[]?|select(.Key=="Name")|.Value) // "None"), IsDefault }' \
-    | jq -s '.' \
-    | json2table -f "${output_format}" -s "VpcId,CidrBlock,Name"
+echo "AXE-ID - Identity Name (eg. PERSONAL-ROOT-jeff-eu-west-1, PERSONAL-IAM-jeff-us-eest-1) "
+read -p "Name: " id_name
 
-exit ${exitcode}
+if [ ! -d "$HOME/.axe/identities/${id_name}" ]; then
+    mkdir -p $HOME/.axe/identities/${id_name}
+else
+    echo "AXE-ID: Name already exists!"
+    exit 1
+fi
+
+read -p "AXE-ID - AWS Access Key: " id_access_key
+read -p "AXE-ID - AWS Secret: " id_secret
+read -p "AXE-ID - AWS Default Region: " id_default_region
+
+config_file="$HOME/.axe/identities/${id_name}/aws.conf"
+cat > "${config_file}" <<EOF
+[default]
+output=json
+aws_access_key_id=${id_access_key}
+aws_secret_access_key=${id_secret}
+region=${id_default_region}
+
+[preview]
+cloudfront=true
+EOF
+
+ssh_key_file="$HOME/.axe/identities/${id_name}/ssh_id.pem"
+touch ${ssh_key_file}
+chmod 400 ${ssh_key_file}
+
+echo "AXE-ID - Basic Identity created: ${config_file}"

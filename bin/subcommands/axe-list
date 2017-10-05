@@ -49,6 +49,7 @@ export DEFAULT_OUT EVENT_LOG
 # Trap  abnormal termination
 trap cleanup 1 2 3 15
 
+FILTER_ROOT="${PROJECT_ROOT}/etc/filters.d"
 
 ##############################################################################
 # Functions
@@ -56,7 +57,9 @@ trap cleanup 1 2 3 15
 
 show_usage() {
     cat <<EOF
-usage: $CONST_SCRIPT_NAME [--help] [-f <FORMAT>]
+usage: $CONST_SCRIPT_NAME [--help] <resource> [-f <FORMAT>]
+       $CONST_SCRIPT_NAME ec2
+       $CONST_SCRIPT_NAME elb -f pipe
 
 The output format can be changed by using one of the supported formats:
 
@@ -80,39 +83,48 @@ then
     exit 0
 fi
 
-# As there's only 1 option it's value will be in $2
-output_format="${2:-simple}"
+resource_name=${1}
+output_format="${3:-simple}"
 
 
 ##############################################################################
 # Main Script
 ##############################################################################
 
-cache aws ec2 describe-instances --output=json \
-    | jq '.Reservations[]["Instances"] | .[] | {
-    VpcId,
-    AZ: (.Placement|.AvailabilityZone),
-    SubnetId,
-    Name: ((.Tags[]?|select(.Key=="Name")|.Value) // "None"),
-    BU: ((.Tags[]?|select(.Key=="BU")|.Value) // "None"),
-    BUSub: ((.Tags[]?|select(.Key=="BUSub")|.Value) // "None"),
-    SystemFunction: ((.Tags[]?|select(.Key=="SystemFunction")|.Value) // "None"),
-    Role: ((.Tags[]?|select(.Key=="Role")|.Value) // "None"),
-    OS: ((.Tags[]?|select(.Key=="OS")|.Value) // "None"),
-    Lifecycle: ((.Tags[]?|select(.Key=="Lifecycle")|.Value) // "None"),
-    State: (.State|.Name),
-    InstanceId,
-    PrivateIpAddress,
-    InstanceType,
-    KeyName,
-    ImageId,
-    Virt: .VirtualizationType,
-    PublicIpAddress: (.PublicIpAddress // "None"),
-    Monitoring: (.Monitoring|.State),
-    auto_start: ((.Tags[]?|select(.Key=="auto:start")|.Value) // "None"),
-    auto_stop: ((.Tags[]?|select(.Key=="auto:stop")|.Value) // "None"),
-    Description: ((.Tags[]?|select(.Key | contains("Description"))|.Value) // "None")}' \
-    | jq -s '.' \
-    | json2table -f "${output_format}" -s "VpcId,AZ,SubnetId,Name"
+filter_path=
 
-exit ${exitcode}
+# Check for a valid filter in both AXE and in the users' config
+if [ -f "${FILTER_ROOT}/${resource_name}.jqf" ]; then
+    filter_path="${FILTER_ROOT}/${resource_name}.jqf"
+fi
+
+if [ -f "${HOME}/.axe/filters/${resource_name}.jqf" ]; then
+    filter_path="${HOME}/.axe/filters/${resource_name}.jqf"
+fi
+
+if [ -z ${filter_path} ]; then
+    _log "$LINENO" "No filter defined for that resource. Check your available filters"
+    exit 1
+fi
+
+# Extract the subcommand for the awscli
+awscli_cmd="$(grep '^#cmd:' "${filter_path}" | head -1 | awk -F':' '{print $2}')"
+
+# Extract the sort order if present
+output_sort_keys="$(grep '^#sort:' "${filter_path}" | head -1 | awk -F':' '{print $2}')"
+
+if [[ "" == "${output_sort_keys}" ]]; then
+
+    aws ${awscli_cmd} --output=json \
+        | jq --monochrome-output --from-file "${filter_path}" \
+        | jq --monochrome-output -s '.' \
+        | json2table -f "${output_format}"
+
+else
+
+    aws ${awscli_cmd} --output=json \
+        | jq --monochrome-output --from-file "${filter_path}" \
+        | jq --monochrome-output -s '.' \
+        | json2table -f "${output_format}" -s "${output_sort_keys}"
+
+fi

@@ -1,0 +1,16 @@
+#cmd: ec2 describe-instances
+#sort: VpcId,AZ,SubnetId,Name
+
+.Reservations[]["Instances"] | .[]? | {
+    VpcId,
+    AZ: (.Placement|.AvailabilityZone),
+    SubnetId,
+    Name: ((.Tags[]?|select(.Key=="Name")|.Value) // "None"),
+    State: (.State|.Name),
+    InstanceId,
+    PrivateIpAddress,
+    InstanceType,
+    KeyName,
+    PublicIpAddress: (.PublicIpAddress // "None"),
+    Description: ((.Tags[]?|select(.Key | contains("Description"))|.Value) // "None")
+}

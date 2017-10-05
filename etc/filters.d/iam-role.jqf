@@ -1,0 +1,8 @@
+#cmd: iam list-roles
+#sort: RoleName,CreateDate,Arn
+
+.Roles[] | {
+    RoleName,
+    CreateDate,
+    Arn
+}

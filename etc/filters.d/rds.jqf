@@ -1,0 +1,20 @@
+#cmd: rds describe-db-instances
+#sort: DBInstanceIdentifier,Name
+
+.DBInstances | .[]? | {
+    DBInstanceIdentifier,
+    DBName,
+    DBInstanceStatus,
+    AvailabilityZone,
+    Engine,
+    EngineVersion,
+    DBInstanceClass,
+    AllocatedStorage,
+    Endpoint: ([(.Endpoint|.Address), (.Endpoint|.Port|tostring)]|join(":")),
+    PubliclyAccessible,
+    LicenseModel,
+    MultiAZ,
+    AutoMinorVersionUpgrade
+}
+
+

@@ -1,0 +1,9 @@
+#cmd: s3api list-buckets
+#sort: Name
+
+.Buckets | .[]? | {
+    Name,
+    CreationDate
+}
+
+

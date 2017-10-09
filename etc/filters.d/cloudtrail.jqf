@@ -1,0 +1,12 @@
+#cmd: cloudtrail describe-trails
+#sort: Name
+
+.trailList | .[]? | {
+    Name,
+    S3BucketName,
+    HomeRegion,
+    IncludeGlobalServiceEvents,
+    IsMultiRegionTrail
+}
+
+

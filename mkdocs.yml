@@ -58,6 +58,7 @@ pages:
   - 'dump-account': 'content/commands/axe-dump-account.md'
   - 'kms-key-list': 'content/commands/axe-kms-key-list.md'
   - 'list': 'content/commands/axe-list.md'
+  - 's3-bucket-size': 'content/commands/axe-s3-bucket-size.md'
   - 'scp': 'content/commands/axe-scp.md'
   - 'sg-add': 'content/commands/axe-sg-add.md'
   - 'ssh': 'content/commands/axe-ssh.md'

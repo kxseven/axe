@@ -3,8 +3,19 @@
 The change-log below has been generated using the Git history in the repo.
 
 
+### v1.3
+
+ - Updated Release Notes
+ - Added documentation for new sub-command
+ - Added helper sub-command to calculate S3 bucket sizes
+ - Added more filters to list sub-command
+ - Added basic filter for Route53 zones
+ - Added more AWS filters for "list" sub-command
+ - Added sub-command to assist with creating simple identities
+
 ### v1.2
 
+ - Updated Release Notes
  - Legacy sub-command cleanup and updates to docs to match
  - Removed legacy commands whose functionalist is now provided by new "list" sub-command
  - Adeed BASH completion for new axe-list sub-command

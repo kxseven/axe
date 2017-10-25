@@ -1,0 +1,11 @@
+#cmd: elbv2 describe-load-balancers
+#sort: VPCId,LoadBalancerName,Scheme
+
+.LoadBalancers | .[] | {
+    VpcId,
+    LoadBalancerName,
+    Scheme,
+    Type,
+    SecurityGroups: (.SecurityGroups|join(", ")),
+    AvailabilityZones: ([ .AvailabilityZones[].ZoneName ]|join(", "))
+}

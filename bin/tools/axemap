@@ -23,10 +23,10 @@ grep_filter="$(echo "${filter}" \
 num_patterns=$(echo "${grep_filter}" | awk -F '|' '{print NF}')
 
 # Now call the provided AXE command and use the grep filter
-axe ${info_source}-list | axegrep -P -i "${grep_filter}"
+axe list ${info_source} | axegrep -P -i "${grep_filter}"
 
 # If we match less patterns that we were provided then let the user know
-num_matches=$(axe ${info_source}-list | grep -c -P -i "${grep_filter}")
+num_matches=$(axe list ${info_source} | grep -c -P -i "${grep_filter}")
 
 if [ ${num_matches} -ne ${num_patterns} ]; then
     echo ""

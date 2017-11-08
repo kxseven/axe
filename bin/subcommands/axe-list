@@ -118,13 +118,13 @@ if [[ "" == "${output_sort_keys}" ]]; then
     aws ${awscli_cmd} --output=json \
         | jq --monochrome-output --from-file "${filter_path}" \
         | jq --monochrome-output -s '.' \
-        | json2table -f "${output_format}"
+        | json2orderedtable -f "${output_format}"
 
 else
 
     aws ${awscli_cmd} --output=json \
         | jq --monochrome-output --from-file "${filter_path}" \
         | jq --monochrome-output -s '.' \
-        | json2table -f "${output_format}" -s "${output_sort_keys}"
+        | json2orderedtable -f "${output_format}" -s "${output_sort_keys}"
 
 fi

@@ -3,6 +3,16 @@
 The change-log below has been generated using the Git history in the repo.
 
 
+### v1.4
+
+ - Added improved version of json2table for use with list sub-command. Legacy command will be removed once all other sub-commands have been migrated
+ - Updated filters for list sub-command
+ - Added more filters for list sub-command
+ - Added filters for IGW and ALB to list sub-command
+ - Updated axemap tool to reflect changes in sub-commands
+ - Updated requirements for Py2.7 and Py3x
+ - Added requirements file for adding Ansible to help support dynamic inventory
+
 ### v1.3
 
  - Updated Release Notes
@@ -11,10 +21,10 @@ The change-log below has been generated using the Git history in the repo.
  - Added more filters to list sub-command
  - Added basic filter for Route53 zones
  - Added more AWS filters for "list" sub-command
- - Added sub-command to assist with creating simple identities
 
 ### v1.2
 
+ - Added sub-command to assist with creating simple identities
  - Updated Release Notes
  - Legacy sub-command cleanup and updates to docs to match
  - Removed legacy commands whose functionalist is now provided by new "list" sub-command

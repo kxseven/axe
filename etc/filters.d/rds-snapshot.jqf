@@ -1,14 +1,14 @@
 #cmd: rds describe-db-snapshots
-#sort: StartTime,State
+#sort: DBInstanceIdentifier,-SnapshotCreateTime,DBSnapshotIdentifier
 
 .DBSnapshots | .[] | {
+    DBInstanceIdentifier,
     SnapshotCreateTime,
     DBSnapshotIdentifier,
-    DBSnapshotArn,
     AllocatedStorage,
     SnapshotType,
     Status,
-    DBInstanceIdentifier,
     Encrypted,
-    PercentProgress
+    PercentProgress,
+    DBSnapshotArn
 }

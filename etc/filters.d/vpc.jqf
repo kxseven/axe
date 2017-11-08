@@ -1,9 +1,9 @@
 #cmd: ec2 describe-vpcs
-#sort: VpcId,CidrBlock,Name
+#sort: Name,CidrBlock,VpcId
 
 .Vpcs[] | {
     VpcId,
-    CidrBlock,
     Name: ((.Tags[]?|select(.Key=="Name")|.Value) // "None"),
+    CidrBlock,
     IsDefault
 }

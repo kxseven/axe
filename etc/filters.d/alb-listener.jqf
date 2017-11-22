@@ -1,0 +1,14 @@
+#foreach: elbv2 describe-load-balancers | jq -r '.LoadBalancers | .[] | .LoadBalancerArn'
+#cmd: elbv2 describe-listeners --load-balancer-arn={}
+#sort: LoadBalancerArn,Protocol
+
+.[] | .Listeners | .[] | {
+    Protocol,
+    Port,
+    ListenerArn,
+    DefaultTargetGroupArn: (([ .DefaultActions[]?.TargetGroupArn ]|join(", ")) // "NA"),
+    SslPolicy: (.SslPolicy? // "NA"),
+    Certificates: (([ .Certificates[]?.CertificateArn ]|join(", ")) // "NA"),
+    LoadBalancerArn,
+}
+

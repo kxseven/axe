@@ -76,6 +76,27 @@ cleanup() {
 }
 
 
+_generate() {
+    eval "aws ${output_generator}" \
+    | xargs -i aws ${awscli_cmd} --output=json \
+    | jq --monochrome-output -s '.'
+}
+
+
+_filter() {
+    cat \
+    | jq --monochrome-output --from-file "${filter_path}" \
+    | jq --monochrome-output -s '.'
+}
+
+
+_tabulate() {
+    cat \
+    | json2orderedtable -f "${output_format}" -s "${output_sort_keys}"
+}
+
+
+
 # show help for no arguments if stdin is a terminal
 if [ "$1" == '-h' ] || [ "$1" == '--help' ] || [ "$1" == 'help' ]
 then
@@ -113,18 +134,17 @@ awscli_cmd="$(grep '^#cmd:' "${filter_path}" | head -1 | awk -F':' '{print $2}')
 # Extract the sort order if present
 output_sort_keys="$(grep '^#sort:' "${filter_path}" | head -1 | awk -F':' '{print $2}')"
 
-if [[ "" == "${output_sort_keys}" ]]; then
+# Extract the generator if present
+output_generator="$(grep '^#foreach:' "${filter_path}" | head -1 | sed -e 's/^#foreach://g')"
 
-    aws ${awscli_cmd} --output=json \
-        | jq --monochrome-output --from-file "${filter_path}" \
-        | jq --monochrome-output -s '.' \
-        | json2orderedtable -f "${output_format}"
+# Use the generator if one is configured, otherwise fallback to default filter
+# and tabulate processing
+if [[ "" != "${output_generator}" ]]; then
+
+    _generate | _filter | _tabulate
 
 else
 
-    aws ${awscli_cmd} --output=json \
-        | jq --monochrome-output --from-file "${filter_path}" \
-        | jq --monochrome-output -s '.' \
-        | json2orderedtable -f "${output_format}" -s "${output_sort_keys}"
+    aws ${awscli_cmd} --output=json | _filter | _tabulate
 
 fi

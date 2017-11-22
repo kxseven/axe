@@ -59,13 +59,23 @@ $ axe list subnet -f pipe
  - A set of valid AWS credentials must be loaded for this to work
 
 
-### Defining your own filters
+### Defining your own filters; Generators, Commands, Sorting
 
 The filters are [jq] compatible filters and must follow the following patterns;
 
  - The filename must end in `.jqf`. The rest of the filename is used as the filter name (`my-special-filter.jqf` becomes available as `axe list my-special-filter`)
  - The aws-cli command used to get source data is specified in a special comment `#cmd: <whatever>`
  - The output can be sorted by specific column names provided in a special comment `#sort: <sort order>`
+ - The filter can use a "generator" command to use as input to the "cmd" command. The output of the "generator" is passwd one line at a time to the "cmd" (using xargs -i) with substitutions made for each occurence of `{}` in the "cmd"
+
+```
+#foreach: elbv2 describe-load-balancers | jq -r '.LoadBalancers | .[] | .LoadBalancerArn'
+#cmd: elbv2 describe-listeners --load-balancer-arn={}
+#sort: LoadBalancerArn,Protocol
+
+<...snip..>
+```
+
  - The resulting output must be a series of dict items which are then assembled into an array before being converted to tabular format
 
 ```

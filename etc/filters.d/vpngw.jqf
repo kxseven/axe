@@ -1,5 +1,5 @@
 #cmd: ec2 describe-vpn-gateways
-#sort: VpcId,VpnGatewayId,Name
+#sort: VpnGatewayId,Name
 
 .VpnGateways | .[]? | {
     VpnGatewayId,

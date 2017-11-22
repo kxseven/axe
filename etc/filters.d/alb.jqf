@@ -1,5 +1,5 @@
 #cmd: elbv2 describe-load-balancers
-#sort: VPCId,LoadBalancerName,Scheme
+#sort: VpcId,LoadBalancerName,Scheme
 
 .LoadBalancers | .[] | {
     VpcId,

@@ -1,5 +1,5 @@
 #cmd: ec2 describe-internet-gateways
-#sort: VpcId,InternetGatewayId,Name
+#sort: InternetGatewayId,Name
 
 .InternetGateways | .[]? | {
     InternetGatewayId,

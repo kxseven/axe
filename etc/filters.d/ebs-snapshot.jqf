@@ -1,4 +1,4 @@
-#cmd: ec2 describe-snapshots
+#cmd: ec2 describe-snapshots --owner-ids=self
 #sort: StartTime,State
 
 .Snapshots | .[] | {

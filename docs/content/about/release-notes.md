@@ -2,6 +2,25 @@
 
 The change-log below has been generated using the Git history in the repo.
 
+### v1.5
+
+!!! warning "Update Python Packages"
+    This release requires updates to one or more Python libraries used. Please ensure you run a `pip install -r <requirements>` after updating from a previous release
+
+ - Added and updated new sub-commands for inventory reporting and diagram generation
+ - Updated EBS snapshot filter to list only snapshots we created
+ - Added internal argument for listing completions
+ - Minor correction on function name
+ - Added new subcommand for VPC visualization and Graphviz DOT output
+ - Added list filter for RouteTable
+ - Updated min version of Jinja2 for new vpc-viz subcommand
+ - Added completion rule for development sub-command
+ - Added support for VPCs with multiple CIDR blocks
+ - Updated docs for more info on using generators
+ - Added jqf filter to demo new list sub-command support for generators
+ - Updated list-command to support complex generator commands
+ - Fixes for filters
+ - Fixes for list filters
 
 ### v1.4
 

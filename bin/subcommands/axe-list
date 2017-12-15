@@ -76,6 +76,19 @@ cleanup() {
 }
 
 
+show_completions() {
+
+    SUBCOMMANDS="$(find ${AXE_ROOT}/etc/filters.d/ -type f -name '*.jqf' -exec basename {} \; 2> /dev/null | sed -e 's/\.jqf$//g')"
+    VS_SUBCOMMANDS=( $SUBCOMMANDS )
+
+    saveIFS=$IFS
+    IFS=$'\n'
+    echo "${VS_SUBCOMMANDS[*]}" | sort
+    IFS=$saveIFS
+
+}
+
+
 _generate() {
     eval "aws ${output_generator}" \
     | xargs -i aws ${awscli_cmd} --output=json \
@@ -103,6 +116,15 @@ then
     show_usage
     exit 0
 fi
+
+
+# show lst of commands
+if [ "$1" == '-c' ] || [ "$1" == '--commands' ] || [ "$1" == 'commands' ]
+then
+    show_completions
+    exit 0
+fi
+
 
 resource_name=${1}
 output_format="${3:-simple}"

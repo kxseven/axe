@@ -1,4 +1,4 @@
-Jinja2==2.8
+Jinja2==2.10
 Markdown==2.6.9
 awscli==1.11.169
 beautifulsoup4==4.4.1

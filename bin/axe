@@ -74,7 +74,7 @@ EOF
 }
 
 
-show_commands() {
+show_completions() {
 
     saveIFS=$IFS
     IFS=$'\n'
@@ -141,7 +141,7 @@ fi
 # show lst of commands
 if [ "$1" == '-c' ] || [ "$1" == '--commands' ] || [ "$1" == 'commands' ]
 then
-    show_commands
+    show_completions
     exit 0
 fi
 

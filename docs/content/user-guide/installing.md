@@ -32,7 +32,7 @@ Some of the additional tools in the AXE repo require additional dependencies.
 |:------------------------------|:-----------------------------------|:--------------------------------------------------------------------------------------------------------|
 | axe dump-account              | Ruby Gem - terraforming            | [Grab it here](https://github.com/dtan4/terraforming). Can be installed with `gem install terraforming` if you have a working Ruby install |
 | axe token-krb5formauth-create | Kerberos support for OS and Python | Can be installed by following the [Installing OS deps](#installing-os-packages-for-dependencies) section below |
-
+| axe vpc-viz                   | Graphviz                           | [Grab it here](http://www.graphviz.org/download/). Can be installed by following the [Installing OS deps](#installing-os-packages-for-dependencies) section below |
 
 ## Getting Started
 
@@ -42,7 +42,7 @@ Some of the additional tools in the AXE repo require additional dependencies.
     compiling from source. If you have issues installing the Python packages using `pip` try installing the OS provided
     packages first
 
- - Install OS packages (recommended)
+ - Install required OS packages
 
     **CentOS/RHEL**
     ```
@@ -53,7 +53,8 @@ Some of the additional tools in the AXE repo require additional dependencies.
         python-requests-kerberos \
         python-simplejson \
         bash-completion \
-        jq
+        jq \
+        graphviz*
     ```
 
     **Debian/Ubuntu**
@@ -65,7 +66,8 @@ Some of the additional tools in the AXE repo require additional dependencies.
         python-requests-kerberos \
         python-simplejson \
         bash-completion \
-        jq
+        jq \
+        graphviz
     ```
 
  - Cloning the Git repo

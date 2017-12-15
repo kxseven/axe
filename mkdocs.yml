@@ -56,6 +56,7 @@ pages:
   - 'auth-list-keys': 'content/commands/axe-auth-list-keys.md'
   - 'auth-report': 'content/commands/axe-auth-report.md'
   - 'dump-account': 'content/commands/axe-dump-account.md'
+  - 'inventory-report': 'content/commands/axe-inventory-report.md'
   - 'kms-key-list': 'content/commands/axe-kms-key-list.md'
   - 'list': 'content/commands/axe-list.md'
   - 's3-bucket-size': 'content/commands/axe-s3-bucket-size.md'
@@ -65,6 +66,7 @@ pages:
   - 'subnet-claim-ip': 'content/commands/axe-subnet-claim-ip.md'
   - 'token-krb5formauth-create': 'content/commands/axe-token-krb5formauth-create.md'
   - 'token-mfaauth-create': 'content/commands/axe-token-mfaauth-create.md'
+  - 'vpc-viz': 'content/commands/axe-vpc-viz.md'
   - 'whoami': 'content/commands/axe-whoami.md'
 - 'For Developers/Contributers':
   - 'Developer Notes': 'content/dev-guide/contributing.md'

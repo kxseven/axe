@@ -6,7 +6,7 @@ Describes the resource inventory within the AWS account and region based on the 
 ### Command
 
 ```
-usage: axe-inventory-report [--help] [-f <FORMAT>]
+usage: axe-inventory-report [-h] [-f <FORMAT>] [-d <OUTPUT-DIR>]
 
 The output format can be changed by using one of the supported formats:
 

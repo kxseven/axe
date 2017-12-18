@@ -1,6 +1,7 @@
 #foreach: elbv2 describe-load-balancers | jq -r '.LoadBalancers | .[] | .LoadBalancerArn'
 #cmd: elbv2 describe-listeners --load-balancer-arn={}
 #sort: LoadBalancerArn,Protocol
+#geo: regional
 
 .[] | .Listeners | .[] | {
     Protocol,

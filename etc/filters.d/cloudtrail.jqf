@@ -1,5 +1,6 @@
 #cmd: cloudtrail describe-trails
 #sort: Name
+#geo: global
 
 .trailList | .[]? | {
     Name,

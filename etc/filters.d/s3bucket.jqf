@@ -1,5 +1,6 @@
 #cmd: s3api list-buckets
 #sort: Name
+#geo: global
 
 .Buckets | .[]? | {
     Name,

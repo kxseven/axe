@@ -49,7 +49,8 @@ export DEFAULT_OUT EVENT_LOG
 # Trap  abnormal termination
 trap cleanup 1 2 3 15
 
-output_format="${2:-simple}"
+output_dir="."
+output_format="simple"
 
 ##############################################################################
 # Functions
@@ -57,7 +58,7 @@ output_format="${2:-simple}"
 
 show_usage() {
     cat <<EOF
-usage: $CONST_SCRIPT_NAME [--help] [-f <FORMAT>]
+usage: $CONST_SCRIPT_NAME [-h] [-f <FORMAT>] [-d <OUTPUT-DIR>]
 
 The output format can be changed by using one of the supported formats:
 
@@ -121,31 +122,105 @@ fs_heading() {
 
 
 # show help for no arguments if stdin is a terminal
-if [ "$1" == '-h' ] || [ "$1" == '--help' ] || [ "$1" == 'help' ]
-then
-    show_usage
-    exit 0
-fi
+while getopts ":f:d:h" opt; do
+  case $opt in
+    h)
+      show_usage
+      exit 0
+      ;;
+    f)
+      output_format="${OPTARG}"
+      ;;
+    d)
+      output_dir="${OPTARG}"
+      ;;
+    \?)
+      echo "Invalid option: -${OPTARG}" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -${OPTARG} requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
 
 ##############################################################################
 # Main Script
 ##############################################################################
 
+content_buffer="$(mktemp)"
+resource_filter="$(mktemp)"
 # These variables will be visible to the header and footer page templates
 aws_account_id="$(axe whoami -f pipe | tail -1 | awk -F '|' '{print $2}' | tr -d '[:space:]')"
 aws_user="$(axe whoami -f pipe | tail -1 | awk -F '|' '{print $4}' | tr -d '[:space:]')"
 
-fs_page_header
 
-buffer="$(mktemp)"
-for resource in $(axe list -c); do
-    fs_heading 2 "${resource}"
-    axe list "${resource}" -f "${output_format}" > "${buffer}" 2> /dev/null
+_log "$LINENO" "Creating Inventory reports in [${output_format}] format into ${output_dir}"
+
+# Open a file for the report
+exec 4> "${output_dir}/aws-inventory-report-global.${output_format}"
+
+axe_report_title="AWS Inventory Report: Global Resources"
+fs_page_header >&4
+
+# Build global resources first
+_log "$LINENO" "Creating inventory of known global resources"
+
+global_resources="$(grep -l '#geo: global' $AXE_ROOT/etc/filters.d/*.jqf | xargs -i basename {} | sed -e 's/\.jqf$//g')"
+echo "${global_resources}" > ${resource_filter}
+
+for resource in ${global_resources}; do
+    fs_heading 2 "${resource}" >&4
+    axe list "${resource}" -f "${output_format}" > "${content_buffer}" 2> /dev/null
     if [ $? -eq 0 ]; then
-        cat "${buffer}"
+        cat "${content_buffer}" >&4
     else
-        echo "None found"
+        echo "None found" >&4
     fi
 done
 
-fs_page_footer
+fs_page_footer >&4
+# Close the report
+exec 4>&-
+
+
+# Iterate through each of the AWS Regions for the remaining known resource types
+region_list="$(aws ec2 describe-regions --output=text | awk '{print $3}')"
+current_region=$AWS_DEFAULT_REGION
+
+for region in $region_list; do
+    AWS_DEFAULT_REGION=${region}
+    export AWS_DEFAULT_REGION
+
+    # Open a file for the report
+    exec 4> "${output_dir}/aws-inventory-report-${AWS_DEFAULT_REGION}.${output_format}"
+
+    axe_report_title="AWS Inventory Report: Regional Resources in ${AWS_DEFAULT_REGION}"
+    fs_page_header >&4
+
+    _log "$LINENO" "Creating inventory of known regional resources for [${AWS_DEFAULT_REGION}] region"
+    for resource in $(axe list -c | grep -v --file=${resource_filter}); do
+        fs_heading 2 "${resource}"  >&4
+        axe list "${resource}" -f "${output_format}" > "${content_buffer}" 2> /dev/null
+        if [ $? -eq 0 ]; then
+            cat "${content_buffer}"  >&4
+        else
+            echo "None found"  >&4
+        fi
+    done
+
+    fs_page_footer >&4
+    # Close the report
+    exec 4>&-
+
+done
+
+# Restore default region
+AWS_DEFAULT_REGION=${current_region}
+export AWS_DEFAULT_REGION
+
+# Cleanup
+[ -f ${content_buffer} ] && rm -f ${content_buffer}
+[ -f ${resource_filter} ] && rm -f ${resource_filter}

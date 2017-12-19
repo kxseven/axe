@@ -287,6 +287,7 @@ def _dump_vpcs(vpc_conn=None, ec2_conn=None, dx_conn=None, options=[]):
         # Generate the HTML content
         content = j2_env.get_template('root.j2').render(
             page_title='AWS VPC Summary for VPC {}'.format(v.id),
+            AXE_ROOT=CONST_AXE_ROOT,
             graph_direction=options['--dir'],
             region=_AWS_REGION,
             azs=azs,

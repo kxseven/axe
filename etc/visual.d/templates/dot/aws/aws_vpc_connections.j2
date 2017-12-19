@@ -1,11 +1,24 @@
 
-        VPC_{{ vpc.id|gv_safe_id }} -> vpc_connections [color="#666666",dir=none];
+        VPC_{{ vpc.id|gv_safe_id }} -> vpc_connections [ {{- style_snippet_edge -}} ];
+
+        vpc_connections [ {{- style_snippet_node -}}, label=
+                    <<TABLE CELLPADDING="5" CELLSPACING="1" BORDER="0">
+                        <TR>
+                            <TD COLSPAN="4"><IMG SRC="{{ image_path }}/aws_ec2_vpc_cx.png" /></TD>
+                        </TR>
+                        <TR>
+                            <TD COLSPAN="4">VPC Connections</TD>
+                        </TR>
+                    </TABLE>> ];
 
         subgraph cluster_connections {
 
-            color=white;
-            node [style=filled];
+            node [ {{- style_snippet_node -}} ];
             label = "Private Connections";
+            bgcolor="#FFFFFF"
+            color="#666666"
+            fillcolor="white"
+            style="dotted, filled"
 
             {% if vpngw %}
                 {% block aws_vpcx_vgw %}

@@ -3,7 +3,30 @@
 _AXE_OLDPROMPT=
 _AXE_OLDPS1=
 
-__separator=""
+_SEPARATOR_LEFT_BOLD=
+_SEPARATOR_LEFT_THIN=
+_SEPARATOR_RIGHT_BOLD=
+_SEPARATOR_RIGHT_THIN=
+
+_patched_font_in_use() {
+    if [ -z "$PATCHED_FONT_IN_USE" ]; then
+      return 1
+    fi
+    return 0
+}
+
+
+if _patched_font_in_use; then
+	_SEPARATOR_LEFT_BOLD=""
+	_SEPARATOR_LEFT_THIN=""
+	_SEPARATOR_RIGHT_BOLD=""
+	_SEPARATOR_RIGHT_THIN=""
+else
+	_SEPARATOR_LEFT_BOLD="◀"
+	_SEPARATOR_LEFT_THIN="❮"
+	_SEPARATOR_RIGHT_BOLD="▶"
+	_SEPARATOR_RIGHT_THIN="❯"
+fi
 
 # Segment colors
 __axe_segment="$(__get_color_escape ${__purple} ${__white})"
@@ -27,39 +50,45 @@ __awstoken_expired_next_sep="$(__get_color_escape ${__red} ${__dark_orange})"
 
 # Attempts to retrieve the current AWS identity name
 _get_segment_aws_id_name() {
-    local segment_icon="$(echo -e "\uf007")"
+    if _patched_font_in_use; then
+        local segment_icon="$(echo -e "\uf007")"
+    fi
     local segment_value="$(echo ${AWS_ID_NAME})"
     if [ ! -z $segment_value ]
     then
-        echo "${__date_next_sep}${__separator}${__awsid_segment} ${segment_icon} ${segment_value} "
+        echo "${__date_next_sep}${_SEPARATOR_RIGHT_BOLD}${__awsid_segment} ${segment_icon} ${segment_value} "
     fi
 }
 
 
 # Attempts to retrieve the current AWS region
 _get_segment_aws_region() {
-    local segment_icon="$(echo -e "\uf0c2")"
+    if _patched_font_in_use; then
+        local segment_icon="$(echo -e "\uf0c2")"
+    fi
     local segment_value="$(echo ${AWS_DEFAULT_REGION})"
     if [ ! -z $segment_value ]
     then
-        echo "${__awsid_next_sep}${__separator}${__awsregion_segment} ${segment_icon} ${segment_value} "
+        echo "${__awsid_next_sep}${_SEPARATOR_RIGHT_BOLD}${__awsregion_segment} ${segment_icon} ${segment_value} "
     fi
 }
 
 
 # Attempts to retrieve the current AWS identity name
 _get_segment_aws_token_expiry() {
-    local segment_icon="$(echo -e "\uf017")"
+    if _patched_font_in_use; then
+        local segment_icon="$(echo -e "\uf017")"
+    fi
     if [ ! -z ${AWS_TOKEN_EXPIRY} ]; then
         local dt_now="$(date)"
         local dt_expiry="$(date --date "@${AWS_TOKEN_EXPIRY}")"
         local delta=$(( $(date -d "$dt_expiry" +%s) - $(date -d "$dt_now" +%s) ))
         if [ ${delta} -gt 0 ]; then
             local segment_value="$(date -d @$(( $(date -d "$dt_expiry" +%s) - $(date -d "$dt_now" +%s) )) -u +'%H:%M:%S')"
-            local segment_style="${__awstoken_valid_next_sep}${__separator}${__awstoken_valid_segment}"
+            local segment_style="${__awstoken_valid_next_sep}${_SEPARATOR_RIGHT_BOLD}${__awstoken_valid_segment}"
         else
             local segment_value="EXPIRED"
-            local segment_style="${__awstoken_expired_next_sep}${__separator}${__awstoken_expired_segment}"
+            local segment_style="${__awstoken_expired_next_sep}${_SEPARATOR_RIGHT_BOLD}${__awstoken_expired_segment}"
         fi
         if [ ! -z $segment_value ]; then
             echo "${segment_style} ${segment_icon} ${segment_value} "
@@ -74,7 +103,7 @@ _get_segment_axe() {
 
 
 _get_segment_datetime() {
-    echo "${__axe_next_sep}${__separator}${__date_segment}"' \d \t '
+    echo "${__axe_next_sep}${_SEPARATOR_RIGHT_BOLD}${__date_segment}"' \d \t '
 }
 
 

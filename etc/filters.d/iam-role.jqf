@@ -2,7 +2,7 @@
 #sort: RoleName,CreateDate,Arn
 #geo: global
 
-.Roles[] | {
+.Roles | .[] | {
     RoleName,
     CreateDate,
     Arn

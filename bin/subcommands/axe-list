@@ -50,6 +50,9 @@ export DEFAULT_OUT EVENT_LOG
 trap cleanup 1 2 3 15
 
 FILTER_ROOT="${PROJECT_ROOT}/etc/filters.d"
+AWSCLI_CMD=aws
+AWSCLI_DEFAULT_ARGS="--output=json"
+
 
 ##############################################################################
 # Functions
@@ -90,9 +93,9 @@ show_completions() {
 
 
 _generate() {
-    eval "aws ${output_generator}" \
-    | xargs -i aws ${awscli_cmd} --output=json \
-    | jq --monochrome-output -s '.'
+    for item in $(eval "aws ${output_generator}"); do
+        eval "${AWSCLI_CMD} ${awscli_cmd_args[@]} ${AWSCLI_DEFAULT_ARGS} | ${output_enricher[@]}"
+    done | jq --monochrome-output -s '.'
 }
 
 
@@ -151,13 +154,17 @@ if [ -z ${filter_path} ]; then
 fi
 
 # Extract the subcommand for the awscli
-awscli_cmd=(aws "$(grep '^#cmd:' "${filter_path}" | head -1 | sed -r -e 's/^#cmd:(\s)?//g')" --output=json)
+awscli_cmd_args="$(grep '^#cmd:' "${filter_path}" | head -1 | sed -r -e 's/^#cmd:(\s)?//g')"
 
 # Extract the sort order if present
 output_sort_keys="$(grep '^#sort:' "${filter_path}" | head -1 | sed -r -e 's/^#sort:(\s)?//g')"
 
 # Extract the generator if present
 output_generator="$(grep '^#foreach:' "${filter_path}" | head -1 | sed -r -e 's/^#foreach:(\s)?//g')"
+
+# Extract the enrichment helper if present
+output_enricher="$(grep '^#enrich:' "${filter_path}" | head -1 | sed -r -e 's/^#enrich:(\s)?//g')"
+output_enricher="${output_enricher:-cat}"
 
 # Use the generator if one is configured, otherwise fallback to default filter
 # and tabulate processing
@@ -167,6 +174,6 @@ if [[ "" != "${output_generator}" ]]; then
 
 else
 
-    eval "${awscli_cmd[@]}" | _filter | _tabulate
+    eval "${AWSCLI_CMD} ${awscli_cmd_args[@]} ${AWSCLI_DEFAULT_ARGS}" | _filter | _tabulate
 
 fi

@@ -7,6 +7,7 @@
     Scheme,
     DNSName,
     Listeners: ([ .ListenerDescriptions[].Listener | "\(.Protocol)/\(.LoadBalancerPort)__to__\(.InstanceProtocol)/\(.InstancePort)" ] | join(", ")),
+    SSLCertificateId: ((.ListenerDescriptions[].Listener | .SSLCertificateId?) // "NA"),
     HealthCheck: ( "\(.HealthCheck.Target) every \(.HealthCheck.Interval)s, timeout:\(.HealthCheck.Timeout)s, OK after \(.HealthCheck.HealthyThreshold), BAD after \(.HealthCheck.UnhealthyThreshold)" ),
     SecurityGroups: (.SecurityGroups|join(", ")),
     Subnets: (.Subnets|join(",")),

@@ -151,13 +151,13 @@ if [ -z ${filter_path} ]; then
 fi
 
 # Extract the subcommand for the awscli
-awscli_cmd="$(grep '^#cmd:' "${filter_path}" | head -1 | awk -F':' '{print $2}')"
+awscli_cmd="$(grep '^#cmd:' "${filter_path}" | head -1 | sed -r -e 's/^#cmd:(\s)?//g')"
 
 # Extract the sort order if present
-output_sort_keys="$(grep '^#sort:' "${filter_path}" | head -1 | awk -F':' '{print $2}')"
+output_sort_keys="$(grep '^#sort:' "${filter_path}" | head -1 | sed -r -e 's/^#sort:(\s)?//g')"
 
 # Extract the generator if present
-output_generator="$(grep '^#foreach:' "${filter_path}" | head -1 | sed -e 's/^#foreach://g')"
+output_generator="$(grep '^#foreach:' "${filter_path}" | head -1 | sed -r -e 's/^#foreach:(\s)?//g')"
 
 # Use the generator if one is configured, otherwise fallback to default filter
 # and tabulate processing

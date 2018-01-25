@@ -151,7 +151,7 @@ if [ -z ${filter_path} ]; then
 fi
 
 # Extract the subcommand for the awscli
-awscli_cmd="$(grep '^#cmd:' "${filter_path}" | head -1 | sed -r -e 's/^#cmd:(\s)?//g')"
+awscli_cmd=(aws "$(grep '^#cmd:' "${filter_path}" | head -1 | sed -r -e 's/^#cmd:(\s)?//g')" --output=json)
 
 # Extract the sort order if present
 output_sort_keys="$(grep '^#sort:' "${filter_path}" | head -1 | sed -r -e 's/^#sort:(\s)?//g')"
@@ -167,6 +167,6 @@ if [[ "" != "${output_generator}" ]]; then
 
 else
 
-    aws ${awscli_cmd} --output=json | _filter | _tabulate
+    eval "${awscli_cmd[@]}" | _filter | _tabulate
 
 fi

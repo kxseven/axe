@@ -1,4 +1,5 @@
 #cmd: ec2 describe-instances
+#tidy: arnchomp
 #sort: VpcId,AZ,SubnetId,Name
 
 .Reservations[]["Instances"] | .[] | {
@@ -11,6 +12,7 @@
     PrivateIpAddress,
     InstanceType,
     KeyName,
+    IamInstanceProfile: ((.IamInstanceProfile | .Arn) // "None"),
     PublicIpAddress: (.PublicIpAddress // "None"),
     Description: ((.Tags[]?|select(.Key=="Description")|.Value) // "None")
 }

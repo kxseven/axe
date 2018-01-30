@@ -17,6 +17,7 @@
     PrivateIpAddress,
     InstanceType,
     KeyName,
+    IamInstanceProfile: ((.IamInstanceProfile | .Arn) // "None"),
     ImageId,
     Virt: .VirtualizationType,
     PublicIpAddress: (.PublicIpAddress // "None"),

@@ -112,6 +112,10 @@ _tabulate() {
 }
 
 
+_tidy() {
+    ${output_tidy[@]}
+}
+
 
 # show help for no arguments if stdin is a terminal
 if [ "$1" == '-h' ] || [ "$1" == '--help' ] || [ "$1" == 'help' ]
@@ -166,14 +170,18 @@ output_generator="$(grep '^#foreach:' "${filter_path}" | head -1 | sed -r -e 's/
 output_enricher="$(grep '^#enrich:' "${filter_path}" | head -1 | sed -r -e 's/^#enrich:(\s)?//g')"
 output_enricher="${output_enricher:-cat}"
 
+# Check for output tidy pre-processor before tabulating data
+output_tidy="$(grep '^#tidy:' "${filter_path}" | head -1 | sed -r -e 's/^#tidy:(\s)?//g')"
+output_tidy="${output_tidy:-cat}"
+
 # Use the generator if one is configured, otherwise fallback to default filter
 # and tabulate processing
 if [[ "" != "${output_generator}" ]]; then
 
-    _generate | _filter | _tabulate
+    _generate | _filter | _tidy | _tabulate
 
 else
 
-    eval "${AWSCLI_CMD} ${awscli_cmd_args[@]} ${AWSCLI_DEFAULT_ARGS}" | _filter | _tabulate
+    eval "${AWSCLI_CMD} ${awscli_cmd_args[@]} ${AWSCLI_DEFAULT_ARGS}" | _filter | _tidy | _tabulate
 
 fi

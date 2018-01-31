@@ -89,11 +89,9 @@ show_usage() {
 usage: $CONST_SCRIPT_NAME [--version] [--help] <command> [<args>]
 
 The most commonly used commands are:
-  docs              View the documentation in your browser
-  auth-setup        Create or update IAM Roles and Groups with policies
-  auth-report       List the currently provisioned credentials
-  instance-create   Provision EC2 instances with tagging into existing VPC(s)
-  instance-list     Lists instances in the currently accessable VPC(s)
+  whoami            Lists information about the current API user
+  list              Lists many AWS resource types using JQ based filters
+  vpc-viz           Creates diagrams and graphs of your VPC resources
   scp               Wrapper for SCP configured to use loaded AWS idemtity
   ssh               Wrapper for SSH configured to use loaded AWS idemtity
 

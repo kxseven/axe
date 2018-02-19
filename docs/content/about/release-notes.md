@@ -2,8 +2,22 @@
 
 The change-log below has been generated using the Git history in the repo.
 
+### v1.7
+
+ - Updated docs to point to GitHub
+ - Added first version of update/upgrade helper
+ - Added string helper to functions lib
+ - Updated filters for EC2 instances, ELBs and ALB Listeners to include all Tags by default on detailed listings
+ - Added linter requirement for Ansible
+ - Updated default message for main axe command
+ - Added initial version of SG-Rule filter for list sub-command
+ - Minor correction for axemap utility to only warn if the number of matches found is less than the number of patterns
+ - Added instance profile to EC2 filters
+ - Added basic ARN manipulation helpers and updated support for list sub-command for new config tag "tidy:"
+
 ### v1.6
 
+ - Updated CHANGELOG for v1.6
  - Added basic JQF filter for instances vs SSM status
  - Updated list sub-command to support additional enrichment stage in the processing pipeline. Updated filters affected
  - Added SSL Cert id to ELB filter
@@ -17,9 +31,6 @@ The change-log below has been generated using the Git history in the repo.
  - Updated inventory reporting to meet criteria for AXE-3. Filtered resources now use the "#geo: global" indicator to identify that they are global resources
 
 ### v1.5
-
-!!! warning "Update Python Packages"
-    This release requires updates to one or more Python libraries used. Please ensure you run a `pip install -r <requirements>` after updating from a previous release
 
  - Updated Release notes for v1.5
  - Added and updated new sub-commands for inventory reporting and diagram generation

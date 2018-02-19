@@ -1,7 +1,8 @@
 #cmd: elb describe-load-balancers
 #sort: VPCId,LoadBalancerName,Scheme
 
-.LoadBalancerDescriptions[] | {
+.LoadBalancerDescriptions[] | (
+{
     VPCId,
     LoadBalancerName,
     Scheme,
@@ -14,3 +15,6 @@
     AvailabilityZones: (.AvailabilityZones|join(", ")),
     Instances: ([ .Instances[].InstanceId ]|join(", "))
 }
++
+((.Tags // [])|from_entries)
+)

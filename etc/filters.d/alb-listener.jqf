@@ -4,7 +4,8 @@
 #sort: LoadBalancerName,Protocol
 #geo: regional
 
-.[] | .Listeners | .[] | {
+.[] | .Listeners | .[] | (
+{
     LoadBalancerName,
     Protocol,
     Port,
@@ -13,4 +14,7 @@
     SslPolicy: (.SslPolicy? // "NA"),
     Certificates: (([ .Certificates[]?.CertificateArn ]|join(", ")) // "NA"),
 }
++
+((.Tags // [])|from_entries)
+)
 

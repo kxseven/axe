@@ -21,7 +21,7 @@ extra:
   logo: 'media/images/logo_icon_w.png'
 
 # Source code repo
-repo_url: 'https://bitbucket.org/kxseven/axe'
+repo_url: 'https://github.com/kxseven/axe'
 # repo_name: 'kxseven/axe'
 
 # Extensions

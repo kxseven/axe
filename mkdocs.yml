@@ -17,7 +17,6 @@ extra:
   palette:
     primary: 'deep purple'
     accent: 'deep orange'
-  repo_icon: 'bitbucket'
   logo: 'media/images/logo_icon_w.png'
 
 # Source code repo

@@ -1,2 +1,3 @@
 ansible>=2.4.0.0
+ansible-lint
 pywinrm>=0.2.2

@@ -1,3 +1,5 @@
+# The requirements below are necessary if you want to develop on AXE
+#
 # Work On: Documentation
 mkdocs==0.16.3
 mkdocs-material==1.8.1

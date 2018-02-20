@@ -1,5 +1,5 @@
 #cmd: ec2 describe-volumes
-#sort: AvailabilityZone,VolumeType,State
+#sort: AvailabilityZone,VolumeType,State,CreateTime
 
 .Volumes | .[] | {
     AvailabilityZone,

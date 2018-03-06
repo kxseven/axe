@@ -1,11 +1,12 @@
 #cmd: rds describe-db-instances
-#sort: DBInstanceIdentifier,Name
+#sort: VpcId,DBInstanceIdentifier,Name
 
 .DBInstances | .[]? | {
     DBInstanceIdentifier,
     DBName,
     DBInstanceStatus,
     AvailabilityZone,
+    VpcId: ((.DBSubnetGroup|.VpcId) // "Unknown"),
     Engine,
     EngineVersion,
     DBInstanceClass,

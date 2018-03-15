@@ -113,7 +113,7 @@ _update_axe_ps1() {
     PS1="${PS1}$(_get_segment_aws_id_name)"
     PS1="${PS1}$(_get_segment_aws_region)"
     PS1="${PS1}$(_get_segment_aws_token_expiry)"
-    PS1="${PS1}${__reset}"'\n\\$ '
+    PS1="${PS1}${__reset}"' \w\n\\$ '
     export PS1
 }
 

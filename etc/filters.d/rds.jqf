@@ -15,6 +15,8 @@
     PubliclyAccessible,
     LicenseModel,
     MultiAZ,
+    DBOptionGroups: ([ .OptionGroupMemberships[].OptionGroupName ]|join(", ")),
+    ParameterGroups: ([ .DBParameterGroups[].DBParameterGroupName ]|join(", ")), 
     AutoMinorVersionUpgrade
 }
 

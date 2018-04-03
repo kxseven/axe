@@ -107,8 +107,8 @@ claim_ip_from_subnet() {
     aws ec2 create-network-interface --subnet-id "${subnet_id}" --output=json > "${buffer}"
 
     # Parse the info
-    eni_id=$(cat "${buffer}" | jq -r '.NetworkInterface["NetworkInterfaceId"]' | wash)
-    new_ip=$(cat "${buffer}" | jq -r '.NetworkInterface["PrivateIpAddress"]' | wash)
+    eni_id=$(cat "${buffer}" | jq -M -r '.NetworkInterface["NetworkInterfaceId"]')
+    new_ip=$(cat "${buffer}" | jq -M -r '.NetworkInterface["PrivateIpAddress"]')
     _log "$LINENO" "Detected IP allocation: ${new_ip} from ${eni_id}"
 
     # Delete the ENI

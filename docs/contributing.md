@@ -1,10 +1,8 @@
-# Developer Notes
-
-## Contributing
+# Contributing to AXE
 
 AXE is published where people more talented than I can readily suggest improvements. If you see an error or something that could be better, please submit an issue.
 
-### General Guidelines
+## General Guidelines
 
  - **Master branch is for merging incoming changes**. Do not make any changes direcly on the master branch.
 
@@ -18,11 +16,11 @@ AXE is published where people more talented than I can readily suggest improveme
 
     ``` shell
     # clone your fork of the repo into the current directory in terminal
-    git clone git@bitbucket.org:<your username>/axe.git
+    git clone https://github.com/<your-username>/axe.git
     # navigate to the newly cloned directory
     cd axe
     # assign the original repo to a remote called "upstream"
-    git remote add upstream git@bitbucket.org:kxseven/axe.git
+    git remote add upstream https://github.com/kxseven/axe.gi
     ```
 
  - If you cloned a while ago, get the latest changes from upstream:
@@ -55,6 +53,16 @@ AXE is published where people more talented than I can readily suggest improveme
  - Open a Pull Request with a clear title and description.
 
 
+## Coding conventions
+
+  * We indent using four spaces
+  * Remove any major problems reported by PEP8 (I like [flake8]) for Python and [shellcheck] for BASH
+  * We put spaces after list items and method parameters (`[1, 2, 3]`, not `[1,2,3]`), around operators (`x += 1`, not `x+=1`), and around hash arrows.
+  * This is open source software. Consider the people who will read your code, and make it look nice for them. It's sort of like driving a car: Perhaps you love doing donuts when you're alone, but with passengers the goal is to make the ride as smooth as possible.
+
+[shellcheck]: https://github.com/koalaman/shellcheck
+[flake8]: http://flake8.pycqa.org/en/latest/
+
 ## Developer Packages Required
 
 In order to do development on AXE you will need to install the list of additional Python packages from `requirements.development`
@@ -62,6 +70,7 @@ In order to do development on AXE you will need to install the list of additiona
 ``` shell
 $ goaxe
 $ pip install -r requirements/requirements.development
+$ pip install -r requirements/requirements.docs
 ```
 
 You may find it more convenient to create a separate Python VirtualEnv for development to keep packages and versions distinct

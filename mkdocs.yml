@@ -21,7 +21,6 @@ extra:
 
 # Source code repo
 repo_url: 'https://github.com/kxseven/axe'
-# repo_name: 'kxseven/axe'
 
 # Extensions
 markdown_extensions:
@@ -68,22 +67,7 @@ pages:
   - 'vpc-viz': 'content/commands/axe-vpc-viz.md'
   - 'whoami': 'content/commands/axe-whoami.md'
 - 'For Developers/Contributers':
-  - 'Developer Notes': 'content/dev-guide/contributing.md'
+  - 'Contribution Guide': 'contributing.md'
   - 'The axeutils lib': 'content/dev-guide/axeutils.md'
 - 'About':
   - 'Release Notes': 'content/about/release-notes.md'
-
-
-# # Styling
-# theme: 'readthedocs'
-
-# # extra_css:
-# #     - css/theme_extra.css
-# #     - css/readthedocs.css
-# #     - css/readthedocs_extra.css
-
-# markdown_extensions:
-#     - toc:
-#         permalink: 
-#     - admonition:
-#     - pymdownx.github:

@@ -1,6 +1,4 @@
 # Work On: Documentation
-mkdocs==0.16.3
-mkdocs-material==1.8.1
-mkdocs-material-components==1.7.9
-Pygments==2.2.0
-pymdown-extensions==3.5
+mkdocs==0.17.4
+mkdocs-material==2.9.1
+pymdown-extensions==4.11

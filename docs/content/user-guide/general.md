@@ -1,7 +1,6 @@
-# General Usage
+# Using AXE
 
-
-The AXE tools are intended to function similar to `git` such that;
+The AXE tools are intended to **function similar to `git`** such that;
 
  - each command is a self-contained tool/script that can be executed atomically if needed
  - valid AXE commands exist as executables in the `$AXE_ROOT/bin/subcommands` directory
@@ -10,20 +9,25 @@ The AXE tools are intended to function similar to `git` such that;
 
 For more details about the subcommand approach can be found [here](https://www.kernel.org/pub/software/scm/git/docs/howto/new-command.html)
 
-## The 'load_axe_credentials' command
+## Load AWS Credentials
 
-Before you use 'axe' you have to load the credentials for your chosen identity. You do this by using the 'load_aws_credentials' command. Type the number of the identity you want to use. You'll may be asked for additional authentication, e.g. MFA, if that is required for the identity you've chosen.
+!!! warning "Authenticate First!"
+    Because almost all of the actions we take will involve querying the AWS API itself, the first thing we need to do is to load an identity and authenticate ourselves in order to make those APi calls.
+
+- Before you use `axe` you have to load the credentials for your chosen identity.
+- This is done by using the 'load_aws_credentials' command and selecting the number of the identity you want to use.
+- You may be asked for additional authentication, e.g. MFA, if that is required for the identity you've chosen.
 
     ```
 	$ load_aws_credentials
-	
-	==============================================================================================================================================================
-	= Available Identities                                                                                                                                       =
-	==============================================================================================================================================================
-	
+
+	==================================================================================================
+	= Available Identities                                                                           =
+	==================================================================================================
+
 	  1 : PERSONAL-example-us-west-2
 	  2 : CORP-DEPT-ADFS-example-eu-west-1
-	
+
 	Please select an identity: 1
 	INFO : MFA Account Detected... Please specify the MFA PIN Now: 882894
 	INFO : AWS_MFA_ID............. arn:aws:iam::AWS-ACCOUNT-ID:mfa/user@hostname.com
@@ -33,11 +37,12 @@ Before you use 'axe' you have to load the credentials for your chosen identity. 
 	INFO : AWS_DEFAULT_REGION..... us-west-2
 	INFO : AWS_ACCESS_KEY_ID...... ABCDEFGHIJKLMNOP
 	INFO : AWS_SECRET_ACCESS_KEY.. DFGBHTYEJHFKUSPSJDJ22333jdjhfh
-	    ```
-The 'load_aws_credentials' command assigns values to the AWS ENVIRONMENT variables.
+    ```
 
-	    ```
-	$ env|grep AWS
+- The 'load_aws_credentials' command assigns values to the `AWS_` ENVIRONMENT variables.
+
+    ```bash
+	$ env | grep AWS
 	AWS_SESSION_TOKEN=FQoDYXdzEsdfsadlkjhnsdflsdliiiPPSDFPASDPasdPfasdjasdrasdfsadrjsdfPPfasdjasdlkjrSDASDFsadfASDASDrfasdrsadfAasdFSDwbennyoH4W5G/YsNoRJiY+YiIdVnk/FlDmRxa8VKwR+LQcvdSSLyNdXzSK3UpPQuA3/CqawM6EEDervIyjEo9MHy3oGdkrCpZXIQGOwwIc4i9I2P6ErPOEDAoxHVaoNCq4xJjRMtMp6je1PUAAnzri862Hwo78KK2QU=
 	AWS_TOKEN_EXPIRY=1528999030
 	AWS_DEFAULT_REGION=us-west-2
@@ -47,8 +52,10 @@ The 'load_aws_credentials' command assigns values to the AWS ENVIRONMENT variabl
 	AWS_ID_NAME=PERSONAL-example-us-west-2
 	AWS_SECURITY_TOKEN=FQoDYXdzEsdfsadlkjhnsdflsdliiiPPSDFPASDPasdPfasdjasdrasdfsadrjsdfPPfasdjasdlkjrSDASDFsadfASDASDrfasdrsadfAasdFSDwbennyoH4W5G/YsNoRJiY+YiIdVnk/FlDmRxa8VKwR+LQcvdSSLyNdXzSK3UpPQuA3/CqawM6EEDervIyjEo9MHy3oGdkrCpZXIQGOwwIc4i9I2P6ErPOEDAoxHVaoNCq4xJjRMtMp6je1PUAAnzri862Hwo78KK2QU=
 	AWS_SSH_KEY=/home/user/.axe/identities/PERSONAL-example-us-west-2/ssh_id.pem
-	    ```
-## The `axe` command
+	```
+
+
+## AXE Commands
 
  - Invoking an AXE command without any args will display it's default 'help' text
 
@@ -85,7 +92,7 @@ The 'load_aws_credentials' command assigns values to the AWS ENVIRONMENT variabl
  - Where an AXE subcommand is creating resources it will require a `-y` argument in order to actually make any changes. This is intentional to prevent applying changes
 
 
-## Sub Commands
+## AXE Sub Commands
 
 Each of the AXE commands exists as a stand-along scriptlet in `$AXE_ROOT/bin/subcommands/`. All of the currently available AXE commands can be displayed using `axe -h`
 

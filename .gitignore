@@ -1,11 +1,14 @@
 /log
 /tmp
 /local
+/.vagrant
+
 # IDEs
 .idea/
 .project
 .pydevproject
 .settings/
+
 ### Vim ###
 *.swp
 

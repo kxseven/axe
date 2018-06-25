@@ -1,19 +1,20 @@
 # AXE - The Cloud Hatchet
 
-## Introduction
+## What is AXE and how can it help me?
 
- - The goal of the AXE tools is to help with the day-to-day and management of your virtual infrastructure and to help you reach a point where other automation tools can then take over in a repeatable, versionable manner.
- - The tools are aimed at being **complimentary** to the existing suite that you're likely already using; AWS CLI, Terraform, Chef, Puppet, Ansible, Salt, etc
+- The AXE tools are a collection of Python and BASH helper scripts that are intended to augment your existing interaction with AWS by
+    + Helping with the loading of AWS credentials into the environment that can be re-used by all of your existing AWS toolset; Terraform, AWS CLI, Terraforming, Ansible, etc
+    + Helping to generate useful information about existing resources you already have on AWS in a format that can be used as part of a pipeline for other tools/apps
 
 
 ## Components
 
 The AXE toolset is seperated into distinct components;
 
-1. The AXE tools themselves (eg. axe-instance-list)
-2. Identity and Credential management that manipulates the active identity to facilitate multiple sets of credentials across many separate stacks (eg. aws.conf)
-
 ![AXE Components](media/images/axe_components.png)
+
+1. The AXE tools themselves (eg. axe list ec2-instance)
+2. Identity and Credential management that manipulates the active identity to facilitate multiple sets of credentials across many separate stacks (eg. aws.conf)
 
 
 ## How it fits together

@@ -4,14 +4,12 @@ site_name: 'AXE: The Cloud Hatchet'
 site_description: Just enough to get you started
 site_author: Hugh Mooney
 
-# Style and Theme
-theme: material
-theme_dir: 'docs/theme/material'
+# Source code repo
+repo_url: 'https://github.com/kxseven/axe'
 
-extra:
-  social:
-    - type: 'github'
-      link: 'https://github.com/kxseven'
+# Style and Theme
+theme:
+  name: 'material'
   feature:
     tabs: false
   palette:
@@ -19,8 +17,14 @@ extra:
     accent: 'deep orange'
   logo: 'media/images/logo_icon_w.png'
 
-# Source code repo
-repo_url: 'https://github.com/kxseven/axe'
+extra_css:
+    - css/theme_extra.css
+
+extra:
+  social:
+    - type: 'github'
+      link: 'https://github.com/kxseven'
+
 
 # Extensions
 markdown_extensions:
@@ -41,7 +45,6 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tasklist(custom_checkbox=true)
   - pymdownx.tilde
-  - pymdownx.github
 
 # Sitemap
 pages:

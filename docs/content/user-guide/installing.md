@@ -1,10 +1,9 @@
 # Installing AXE
 
-## Minimum Requirements
+## Before you start
 
-You may need to install OS packages before performing the steps described in "[Getting Started](#getting-started)". For
-convenience the installation for OS packages is described in the "[Troubleshooting](/content/user-guide/troubleshooting/)" section at the
-end of this guide
+!!! tip "Do you need Kerberos/ActiveDirectory Support?"
+    You may need to install OS packages before performing the steps described in "[Getting Started](#getting-started)". For convenience the installation for OS packages is described in the "[Troubleshooting](/content/user-guide/troubleshooting/)" section at the end of this guide
 
 **Core Utilities**
 
@@ -19,7 +18,7 @@ In order to use the core AXE tools you will need the tools/software below.
 | Python Virtualenv*       | [https://github.com/pypa/virtualenv/](https://github.com/pypa/virtualenv/) |
 | jq                       | [https://stedolan.github.io/jq/](https://stedolan.github.io/jq/)           |
 
-!!! note "Hatch instead of Virtualenv"
+!!! tip "Hatch instead of Virtualenv"
     You may want to use the [hatch] utility instead of virtualEnv. I haven't had time to test all of the functionality using a hatch environment but it may be useful to have a single "Cloud" environment for hatch instead of many virtualenvs, one for each 'tool'
 
 [hatch]: https://github.com/ofek/hatch
@@ -34,7 +33,8 @@ Some of the additional tools in the AXE repo require additional dependencies.
 | axe token-krb5formauth-create | Kerberos support for OS and Python | Can be installed by following the [Installing OS deps](#installing-os-packages-for-dependencies) section below |
 | axe vpc-viz                   | Graphviz                           | [Grab it here](http://www.graphviz.org/download/). Can be installed by following the [Installing OS deps](#installing-os-packages-for-dependencies) section below |
 
-## Getting Started
+
+## Installing AXE
 
 !!! warning "Prefer OS packages"
     While many of the Python packages needed can be installed using `pip` I would recommend taking advantage of the
@@ -46,32 +46,33 @@ Some of the additional tools in the AXE repo require additional dependencies.
 
     **CentOS/RHEL**
     ```
-    $ sudo yum install \
+    sudo yum install epel-release -y
+    sudo yum install -y \
         krb5-devel \
         python-gssapi \
         python-kerberos \
         python-requests-kerberos \
         python-simplejson \
-	python2-pip \
-	python-virtualenv \
-	git \
         bash-completion \
+        python2-pip \
+        python-virtualenv \
+        git \
         jq \
         graphviz*
     ```
 
     **Debian/Ubuntu**
     ```
-    $ sudo apt-get install \
+    sudo apt-get install -y \
         libkrb5-dev \
         python-gssapi \
         python-kerberos \
         python-requests-kerberos \
         python-simplejson \
-	python-pip \
-	virtualenv \
-	git \
         bash-completion \
+        python-pip \
+        virtualenv \
+        git \
         jq \
         graphviz
     ```
@@ -79,27 +80,30 @@ Some of the additional tools in the AXE repo require additional dependencies.
  - Cloning the Git repo
 
     ```
-    $ git clone https://bitbucket.org/kxseven/axe.git
-    $ cd axe; AXE_ROOT=$(pwd); export AXE_ROOT;
+    git clone https://bitbucket.org/kxseven/axe.git
+    cd axe
+    AXE_ROOT=$(pwd)
+    export AXE_ROOT
     ```
 
  - Create a VirtualEnv (Python v2.7) to hold AXE requirements
 
     ```
-    $ cd $AXE_ROOT; virtualenv local/python
+    cd $AXE_ROOT
+    virtualenv local/python
     ```
 
  - Activate the virtualenv Python
 
     ```
-    $ source $AXE_ROOT/etc/axerc
-    $ pip install -r requirements/requirements.python2
+    source $AXE_ROOT/etc/axerc
+    pip install -r requirements/requirements.python2
     ```
 
  - Add the env loading file to your shell config (.bashrc)
 
     ```
-    $ cat >> ~/.bashrc <<-EOF
+    cat >> ~/.bashrc <<-EOF
 
     # AXE Environment
     AXE_ROOT=$AXE_ROOT
@@ -114,8 +118,8 @@ Some of the additional tools in the AXE repo require additional dependencies.
  - Deactive the VirtualEnv and log back in again to verify that all works as expected by triggering the `goaxe` helper
 
     ```
-    $ goaxe
-    (python)[vagrant@jumphost01 axe]$ axe -h
+    goaxe
+    (python)[vagrant@jumphost01 axe]axe -h
     usage: axe [--version] [--help] <command> [<args>]
 
     available commands in '/home/vagrant/axe/bin/subcommands'
@@ -142,17 +146,17 @@ Some of the additional tools in the AXE repo require additional dependencies.
  - Start by creating a directory in which to store your id
 
     ```
-    $ mkdir -p ~/.axe/identities
-    $ mkdir -p ~/.axe/identities/<id-name>
+    mkdir -p ~/.axe/identities
+    mkdir -p ~/.axe/identities/<id-name>
     ```
 
  - If you don't have your SSH key to hand you can simply create an empty file for now and replace this with you PEM PrivateKey file provided by AWS
 
     ```
-    $ touch ~/.axe/identities/<id-name>/ssh_id.pem
+    touch ~/.axe/identities/<id-name>/ssh_id.pem
     ```
 
-### Basic Identity
+### API Credentials
 
  - A basic API keys based identity uses two files; 1) AWS Config, 2) A valid private key for use when using axe-ssh or axe-scp
 
@@ -177,7 +181,10 @@ Some of the additional tools in the AXE repo require additional dependencies.
     ```
 
 
-### MFA Based Identity
+### API Credentials with MFA
+
+!!! warning "Credentials Expire after 4 Hours"
+    Identities that load and generate temporary credentials are created with a fixed expiry. This is described [here in the AWS docs](https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html). Although the new default is to expire credentials in 12 hours the **AXE tools default to requesting expiry after four hours**
 
 !!! warning "aws_mfa_id"
     It's **very** important that your `aws_mfa_id` is specified as `mfa/userid` and not `user/userid`. If copying your username from the AWS console it will be in the `user/userid` format.
@@ -205,12 +212,13 @@ Some of the additional tools in the AXE repo require additional dependencies.
     cloudfront=true
     ```
 
-### Kerberos authenticated IAM Role using SAML2
 
-!!! note "Authenticated Form Access"
-    This is used for when access to the portal that generates SAML2 tokens requires an authenticated Kerberos token
-    itself. This is common in corporate/enterprise environments that make use of an IDP so that Active Directory
-    credentials can be uplifted to provide access to predefined roles in AWS IAM via federated login
+### API Credentials using Kerberos/Active Directory SAML2
+
+!!! warning "Credentials Expire after 4 Hours"
+    Identities that load and generate temporary credentials are created with a fixed expiry. This is described [here in the AWS docs](https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html). Although the new default is to expire credentials in 12 hours the **AXE tools default to requesting expiry after four hours**
+
+ - This is used for when access to the portal that generates SAML2 tokens requires an authenticated Kerberos token     itself which is common in corporate/enterprise environments that make use of an IDP so that Active Directory     credentials can be uplifted to provide access to predefined roles in AWS IAM via federated login
 
  - The folder structure is slightly different and needs to contain an `idp_params.json` file that configures which parameters are needed from the Federated Identity Provider
 
@@ -259,19 +267,19 @@ Some of the additional tools in the AXE repo require additional dependencies.
  - Initialize your Kerberos session using `kinit MY-REALM-ID@MY-CORP.COM -V`
 
 
-
-
 ## Installing OS packages for dependencies
 
 **CentOS/RHEL**
 ```
-$ sudo yum groupinstall "Development Tools"
-$ sudo yum install epel-release
-$ sudo yum install krb5-devel openssl-devel libffi-devel python-devel
+sudo yum groupinstall "Development Tools"
+sudo yum install -y epel-release
+sudo yum install -y python2-pip python-virtualenv git
+sudo yum install -y krb5-devel openssl-devel libffi-devel python-devel
 ```
 
 **Debian/Ubuntu**
 ```
-$ sudo apt-get install build-essential
-$ sudo apt-get install libkrb5-dev libssl-dev libffi-dev python-dev
+sudo apt-get install -y build-essential
+sudo apt-get install -y python-pip virtualenv git
+sudo apt-get install -y libkrb5-dev libssl-dev libffi-dev python-dev
 ```

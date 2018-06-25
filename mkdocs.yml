@@ -51,7 +51,7 @@ pages:
 - 'Getting Started':
   - 'Overview': 'index.md'
   - 'Installing AXE': 'content/user-guide/installing.md'
-  - 'General Usage': 'content/user-guide/general.md'
+  - 'Using AXE': 'content/user-guide/general.md'
   - 'Troubleshooting': 'content/user-guide/troubleshooting.md'
 - 'AXE Sub-Commands':
   - 'auth-list-keys': 'content/commands/axe-auth-list-keys.md'

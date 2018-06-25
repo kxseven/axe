@@ -2,6 +2,33 @@
 
 The change-log below has been generated using the Git history in the repo.
 
+
+### v1.8
+
+ - More doc cleanup
+ - Updates to initial docs
+ - Updated README
+ - Cleanup of mkdocs theme, updates to use built-in theme. Updated requirements for docs
+ - Ignore local vagrant content
+ - Corrected requirements for Python3
+ - Corrected requirements
+ - package install order and added load_aws_credentials detail
+ - Minor updates to README
+ - Cleanup of CRUD
+ - Added filter for IAM instance profiles
+ - Minor updates to docs, docs moved to locations that will be detected by repo tools
+ - Removed requirement for output cleanup script
+ - Updated filters for RDS
+ - Updated AMI filter to pass through all properties and tags
+ - Added new filter for RDS subnet groups
+ - Added filters for RDS resources
+ - Added working dir to customized AXE PS1
+ - Added VPCID to RDS filter
+ - More filters for EBS and Lambda
+ - Updates and cleanup of requirements
+ - Removed incorrect repo icon in mkDocs config
+ - Updated CHANGELOG for v1.7
+
 ### v1.7
 
  - Updated docs to point to GitHub
@@ -14,9 +41,6 @@ The change-log below has been generated using the Git history in the repo.
  - Minor correction for axemap utility to only warn if the number of matches found is less than the number of patterns
  - Added instance profile to EC2 filters
  - Added basic ARN manipulation helpers and updated support for list sub-command for new config tag "tidy:"
-
-### v1.6
-
  - Updated CHANGELOG for v1.6
  - Added basic JQF filter for instances vs SSM status
  - Updated list sub-command to support additional enrichment stage in the processing pipeline. Updated filters affected

@@ -1,5 +1,6 @@
 # General Usage
 
+
 The AXE tools are intended to function similar to `git` such that;
 
  - each command is a self-contained tool/script that can be executed atomically if needed
@@ -9,6 +10,44 @@ The AXE tools are intended to function similar to `git` such that;
 
 For more details about the subcommand approach can be found [here](https://www.kernel.org/pub/software/scm/git/docs/howto/new-command.html)
 
+## The 'load_axe_credentials' command
+
+Before you use 'axe' you have to load the credentials for your chosen identity. You do this by using the 'load_aws_credentials' command. Type the number of the identity you want to use. You'll may be asked for additional authentication, e.g. MFA, if that is required for the identity you've chosen.
+
+    ```
+	$ load_aws_credentials
+	
+	==============================================================================================================================================================
+	= Available Identities                                                                                                                                       =
+	==============================================================================================================================================================
+	
+	  1 : PERSONAL-example-us-west-2
+	  2 : CORP-DEPT-ADFS-example-eu-west-1
+	
+	Please select an identity: 1
+	INFO : MFA Account Detected... Please specify the MFA PIN Now: 882894
+	INFO : AWS_MFA_ID............. arn:aws:iam::AWS-ACCOUNT-ID:mfa/user@hostname.com
+	INFO : AWS_TOKEN_EXPIRES...... 2018-06-14 17:57:10
+	INFO : AWS_CONFIG_FILE........ /tmp/awsmfaxXcW
+	INFO : AWS_SSH_KEY............ /home/vagrant/.axe/identities/PERSONAL-example-us-west-2/ssh_id.pem
+	INFO : AWS_DEFAULT_REGION..... us-west-2
+	INFO : AWS_ACCESS_KEY_ID...... ABCDEFGHIJKLMNOP
+	INFO : AWS_SECRET_ACCESS_KEY.. DFGBHTYEJHFKUSPSJDJ22333jdjhfh
+	    ```
+The 'load_aws_credentials' command assigns values to the AWS ENVIRONMENT variables.
+
+	    ```
+	$ env|grep AWS
+	AWS_SESSION_TOKEN=FQoDYXdzEsdfsadlkjhnsdflsdliiiPPSDFPASDPasdPfasdjasdrasdfsadrjsdfPPfasdjasdlkjrSDASDFsadfASDASDrfasdrsadfAasdFSDwbennyoH4W5G/YsNoRJiY+YiIdVnk/FlDmRxa8VKwR+LQcvdSSLyNdXzSK3UpPQuA3/CqawM6EEDervIyjEo9MHy3oGdkrCpZXIQGOwwIc4i9I2P6ErPOEDAoxHVaoNCq4xJjRMtMp6je1PUAAnzri862Hwo78KK2QU=
+	AWS_TOKEN_EXPIRY=1528999030
+	AWS_DEFAULT_REGION=us-west-2
+	AWS_SECRET_ACCESS_KEY=DFGBHTYEJHFKUSPSJDJ22333jdjhfh
+	AWS_MFA_ID=arn:aws:iam::AWS-ACCOUNT-ID:mfa/user@hostname.com
+	AWS_ACCESS_KEY_ID=ABCDEFGHIJKLMNOP
+	AWS_ID_NAME=PERSONAL-example-us-west-2
+	AWS_SECURITY_TOKEN=FQoDYXdzEsdfsadlkjhnsdflsdliiiPPSDFPASDPasdPfasdjasdrasdfsadrjsdfPPfasdjasdlkjrSDASDFsadfASDASDrfasdrsadfAasdFSDwbennyoH4W5G/YsNoRJiY+YiIdVnk/FlDmRxa8VKwR+LQcvdSSLyNdXzSK3UpPQuA3/CqawM6EEDervIyjEo9MHy3oGdkrCpZXIQGOwwIc4i9I2P6ErPOEDAoxHVaoNCq4xJjRMtMp6je1PUAAnzri862Hwo78KK2QU=
+	AWS_SSH_KEY=/home/user/.axe/identities/PERSONAL-example-us-west-2/ssh_id.pem
+	    ```
 ## The `axe` command
 
  - Invoking an AXE command without any args will display it's default 'help' text

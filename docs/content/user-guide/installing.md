@@ -52,6 +52,9 @@ Some of the additional tools in the AXE repo require additional dependencies.
         python-kerberos \
         python-requests-kerberos \
         python-simplejson \
+	python2-pip \
+	python-virtualenv \
+	git \
         bash-completion \
         jq \
         graphviz*
@@ -65,6 +68,9 @@ Some of the additional tools in the AXE repo require additional dependencies.
         python-kerberos \
         python-requests-kerberos \
         python-simplejson \
+	python-pip \
+	virtualenv \
+	git \
         bash-completion \
         jq \
         graphviz
@@ -261,13 +267,11 @@ Some of the additional tools in the AXE repo require additional dependencies.
 ```
 $ sudo yum groupinstall "Development Tools"
 $ sudo yum install epel-release
-$ sudo yum install python2-pip python-virtualenv git
 $ sudo yum install krb5-devel openssl-devel libffi-devel python-devel
 ```
 
 **Debian/Ubuntu**
 ```
 $ sudo apt-get install build-essential
-$ sudo apt-get install python-pip virtualenv git
 $ sudo apt-get install libkrb5-dev libssl-dev libffi-dev python-dev
 ```

@@ -8,22 +8,23 @@ site_author: Hugh Mooney
 repo_url: 'https://github.com/kxseven/axe'
 
 # Style and Theme
-theme:
-  name: 'material'
-  feature:
-    tabs: false
-  palette:
-    primary: 'deep purple'
-    accent: 'deep orange'
-  logo: 'media/images/logo_icon_w.png'
-
-extra_css:
-    - css/theme_extra.css
+theme: material
+theme_dir: 'docs/theme/material'
 
 extra:
   social:
     - type: 'github'
       link: 'https://github.com/kxseven'
+  feature:
+    tabs: false
+  palette:
+    primary: 'deep purple'
+    accent: 'deep orange'
+  repo_icon: 'github'
+  logo: 'media/images/logo_icon_w.png'
+
+extra_css:
+    - css/theme_extra.css
 
 
 # Extensions

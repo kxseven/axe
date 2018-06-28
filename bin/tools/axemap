@@ -11,6 +11,7 @@ filter="$2"
 # Tidy the filter so that it can be used with grep
 grep_filter="$(echo "${filter}" \
     | tr ',' '|' \
+    | tr ';' '|' \
     | tr -d ' ' \
     | tr -d '\r' \
     | tr '\n' '|' \

@@ -117,12 +117,14 @@ env-list
 
 There are additional utility scriptlets in `$AXE_ROOT/bin/tools/` which are intended to be helper scripts for processing AWS data at the command line and from which several of the AXE commands themselves rely on.
 
-| Tool/Command    | Description                                                                                        |
-|:---------------- |:--------------------------------------------------------------------------------------------------- |
-| kfl             | Runs the provided command with args, keeping the first line of the original output. (Useful when the first line contains headers: CSV, etc)                                  |
-| axegrep         | Based on `kfl` but keeps the first 2 lines which are generally the AXE output header                                                                                         |
-| axemap          | Attempts to match text tags to resource IDs for a specific resource type; SG names -to- SG ids                                                                               |
-| cache           | Caches the output of the command for up to X mins such that subsequent runs of the same command use the cached output. Useful for caching the output of verbose AWS commands |
-| json2properties | Converts JSON to Java Properties syntax                                                                                                                                      |
-| json2table      | Attempts to tabularize JSON input into tabular data based on the first keys of a dict or rows in an array                                                                    |
-
+| Tool/Command      | Description                                                                                                                                                                  |
+|:------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| arnchomp          | Attempts to regex match ARNs and reduce them to only the resource name. Can be used as part of a shell pipeline                                                              |
+| arnsplit          | Splits an ARN into multiple tokens, defaulting to the resource token                                                                                                         |
+| axegrep           | Based on `kfl` but keeps the first 2 lines which are generally the AXE output header                                                                                         |
+| axemap            | Attempts to match text tags to resource IDs for a specific resource type; SG names -to- SG ids                                                                               |
+| cache             | Caches the output of the command for up to X mins such that subsequent runs of the same command use the cached output. Useful for caching the output of verbose AWS commands |
+| json2orderedtable | Attempts to tabularize JSON input into tabular data, with specific colum sorting                                                                                             |
+| json2properties   | Converts JSON to Java Properties syntax                                                                                                                                      |
+| json2table        | Attempts to tabularize JSON input into tabular data based on the first keys of a dict or rows in an array                                                                    |
+| kfl               | Runs the provided command with args, keeping the first line of the original output. (Useful when the first line contains headers: CSV, etc)                                  |

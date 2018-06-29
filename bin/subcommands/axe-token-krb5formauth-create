@@ -293,12 +293,14 @@ try:
     _log.debug('aws_access_key_id {}'.format(token.credentials.access_key))
     _log.debug('aws_secret_access_key {}'.format(token.credentials.secret_key))
     _log.debug('aws_session_token {}'.format(token.credentials.session_token))
+    _log.debug('aws_token_expiry {}'.format(token.credentials.expiration))
 
     # Write the updated config file
     with open(aws_config_file, 'w+') as f:
         f.write('aws_access_key_id {}\n'.format(token.credentials.access_key))
         f.write('aws_secret_access_key {}\n'.format(token.credentials.secret_key))
         f.write('aws_session_token {}\n'.format(token.credentials.session_token))
+        f.write('aws_token_expiry {}\n'.format(token.credentials.expiration))
         f.close()
         sys.exit(0)
 

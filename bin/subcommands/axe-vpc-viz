@@ -40,7 +40,7 @@ from future.utils import iteritems
 
 import os
 import sys
-import distutils
+import distutils.spawn as sp
 from axeutils.logger import AxeLog
 from axeutils import check_imports, clean_up
 import docopt
@@ -161,7 +161,7 @@ def _dump_vpcs(vpc_conn=None, ec2_conn=None, dx_conn=None, options=[]):
     resources within or connected to a VPC"""
 
     _log.debug('Checking if graphviz is installed for later conversions')
-    cmd_dot = distutils.spawn.find_executable('dot')
+    cmd_dot = sp.find_executable('dot')
 
     vpc_ids = options['--vpc-id'] if '--vpc-id' in options else None
 

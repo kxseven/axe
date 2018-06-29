@@ -9,7 +9,7 @@
 #
 
 # Default MFA token duration in seconds
-DEFAULT_TOKEN_DURATION=3600
+DEFAULT_TOKEN_DURATION=14400
 
 _chomp() {
     local s="$(echo "${@}" | sed -e 's/^ *//g;s/ *$//g')"
@@ -125,7 +125,8 @@ _load_krb5formauth_credentials() {
         "${aws_idp_url}" \
         "${identity_path}/idp_params.json" \
         "${aws_idp_principal}" \
-        "${AWS_CONFIG_FILE}"
+        "${AWS_CONFIG_FILE}" \
+        "${DEFAULT_TOKEN_DURATION}"
 
     [ $? -eq 0 ] || { echo "ERROR: IDP Token generation failed" && return ;}
 

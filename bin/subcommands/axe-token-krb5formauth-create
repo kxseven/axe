@@ -24,7 +24,7 @@ Arguments:
   principal         The identity to authenticate with in the form of user@REALM
   creds_file        The filename to store credentials in if successful
   token_duration    The duration in seconds that a requested token is valid for
-                    from the time of successful authentication [default: 3600]
+                    from the time of successful authentication [default: 14400]
 
 Options:
   --sslverify       Whether or not to validate the SSL cert from the SAML URL.

@@ -3,7 +3,7 @@
 Basic script to provide AWS Session Tokens
 
 Usage:
-    axe-token-mfaauth-create <access_key> <secret_key> <mfa_serial_number> <mfa_token> [ --debug ]
+    axe-token-mfaauth-create <access_key> <secret_key> <mfa_serial_number> <mfa_token> <token_duration_seconds> [ --debug ]
     axe-token-mfaauth-create ( -h | --help )
 
 """
@@ -22,7 +22,6 @@ from axeutils import check_imports, clean_up
 
 CONST_DIR_TMP = "/tmp"
 CONST_AXE_ROOT = os.getenv('AXE_ROOT', '')
-CONST_STS_TOKEN_DURATION = 3600
 
 ###############################################################################
 # CONFIG - End (Do Not Edit Below)
@@ -47,10 +46,11 @@ try:
     secret_key = options['<secret_key>']
     mfa_serial_number = options['<mfa_serial_number>']
     mfa_token = options['<mfa_token>']
+    mfa_token_duration = options['<token_duration_seconds>']
 
     sts = boto.connect_sts(access_key, secret_key)
     token = sts.get_session_token(
-        duration=CONST_STS_TOKEN_DURATION,
+        duration=mfa_token_duration,
         force_new=True,
         mfa_serial_number=mfa_serial_number,
         mfa_token=mfa_token

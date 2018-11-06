@@ -6,6 +6,7 @@
     LoadBalancerName,
     Scheme,
     Type,
-    SecurityGroups: (.SecurityGroups|join(", ")),
-    AvailabilityZones: ([ .AvailabilityZones[].ZoneName ]|join(", "))
+    SecurityGroups: ((.SecurityGroups|join(",")) // "none"),
+    AvailabilityZones: (( ([ .AvailabilityZones[].ZoneName ]) // "") | join(","))
 }
+

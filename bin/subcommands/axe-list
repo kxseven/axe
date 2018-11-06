@@ -108,7 +108,7 @@ _filter() {
 
 _tabulate() {
     cat \
-    | json2orderedtable -f "${output_format}" -s "${output_sort_keys}"
+    | json2orderedtable -s "${output_sort_keys}" ${vs_table_helper_args[*]}
 }
 
 
@@ -134,8 +134,8 @@ fi
 
 
 resource_name=${1}
-output_format="${3:-simple}"
-
+vs_args=("${@}")
+vs_table_helper_args=("${vs_args[@]:1}")
 
 ##############################################################################
 # Main Script

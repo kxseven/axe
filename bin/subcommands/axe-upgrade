@@ -115,5 +115,7 @@ echo "AXE | Attempting Upgrade"
 pushd "${AXE_ROOT}"
 require_clean_work_tree
 git pull
+echo "AXE | Ensuring requirements are present"
+"${AXE_ROOT}/local/python/bin/pip" install -U -r "${AXE_ROOT}/requirements/requirements.python2"
 popd
 echo "AXE | Status: $(axe --version)"

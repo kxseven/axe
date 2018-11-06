@@ -66,11 +66,14 @@ usage: $CONST_SCRIPT_NAME [--help] <resource> [-f <FORMAT>]
 
 The output format can be changed by using one of the supported formats:
 
-plain, simple, grid, fancy_grid, pipe, orgtbl, rst, mediawiki, html, latex,
-latex_booktabs, tsv (default: simple)
+plain, simple, github, grid, fancy_grid, pipe, orgtbl, jira, presto, psql, rst,
+mediawiki, moinmoin, youtrack, html, latex, latex_raw, latex_booktabs, textile
+(default: simple)
 
 EOF
 }
+
+
 
 
 cleanup() {

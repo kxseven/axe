@@ -9,7 +9,7 @@
 #
 
 # Default MFA token duration in seconds
-DEFAULT_TOKEN_DURATION=14400
+DEFAULT_TOKEN_DURATION=3600
 
 _chomp() {
     local s="$(echo "${@}" | sed -e 's/^ *//g;s/ *$//g')"
@@ -50,7 +50,7 @@ _load_credentials_from_json() {
 
     # Now set the token expiry time so that it can be used for the PS1 prompt
     let AWS_TOKEN_EXPIRY=$(date +"%s" --date "${AWS_EXPIRY}")
-    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date @${AWS_TOKEN_EXPIRY})
+    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date ${AWS_TOKEN_EXPIRY})
     echo -e "INFO : ${__fg_yellow}AWS_TOKEN_EXPIRES......${__no_color} $expiry_time"
 
     export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION

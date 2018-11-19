@@ -70,17 +70,19 @@ _load_mfaauth_credentials() {
     AWS_ACCESS_KEY_ID="${aws_access_key_id}"
     AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}"
     AWS_MFA_ID="${aws_mfa_id}"
+    REQUESTED_TOKEN_DURATION="${token_duration:-$DEFAULT_TOKEN_DURATION}"
 
     AWS_CONFIG_FILE=$(mktemp /tmp/awsmfaXXXX)
 
     echo -e -n "INFO : ${__fg_red}MFA Account Detected... ${__no_color}"
     read -p "Please specify the MFA PIN Now: " response
+    echo -e "INFO : ${__fg_red}Requesting Token for... ${REQUESTED_TOKEN_DURATION}s ${__no_color}"
     ${PROJECT_ROOT}/bin/subcommands/axe-token-mfaauth-create \
         "$aws_access_key_id" \
         "$aws_secret_access_key" \
         "$AWS_MFA_ID" \
         "$response" \
-        "${DEFAULT_TOKEN_DURATION}" \
+        "${REQUESTED_TOKEN_DURATION}" \
         > $AWS_CONFIG_FILE
 
     AWS_ACCESS_KEY_ID="$(grep -h aws_access_key_id "$AWS_CONFIG_FILE" | awk '{print $2}')"
@@ -113,6 +115,7 @@ _load_krb5formauth_credentials() {
     AWS_DEFAULT_REGION="${region}"
     AWS_ACCESS_KEY_ID="${aws_access_key_id}"
     AWS_SECRET_ACCESS_KEY="${aws_secret_access_key}"
+    REQUESTED_TOKEN_DURATION="${token_duration:-$DEFAULT_TOKEN_DURATION}"
 
     AWS_CONFIG_FILE=$(mktemp /tmp/awsmfaXXXX)
 
@@ -128,7 +131,7 @@ _load_krb5formauth_credentials() {
         "${identity_path}/idp_params.json" \
         "${aws_idp_principal}" \
         "${AWS_CONFIG_FILE}" \
-        "${DEFAULT_TOKEN_DURATION}"
+        "${REQUESTED_TOKEN_DURATION}"
 
     [ $? -eq 0 ] || { echo "ERROR: IDP Token generation failed" && return ;}
 
@@ -167,6 +170,7 @@ load_aws_credentials() {
     unset aws_secret_access_key
     unset aws_idp_url
     unset aws_idp_principal
+    unset token_duration
 
     # Clear function definitions
     funcs="$(declare -F | grep 'cfg\.')"

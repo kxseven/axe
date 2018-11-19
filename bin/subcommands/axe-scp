@@ -113,4 +113,8 @@ fi
 new_command_line=$(echo "$CONST_COMMAND_LINE" | sed -e "s/${target}/${target_address}/g")
 
 _log "$LINENO" "Attempting connection to ${target_address}"
-scp -i $AWS_SSH_KEY $new_command_line
+if [ -s "$AWS_SSH_KEY" ]; then
+   scp -i "${AWS_SSH_KEY}" ${new_command_line}
+else
+   scp ${new_command_line}
+fi

@@ -44,13 +44,13 @@ _load_credentials_from_json() {
         AWS_SECURITY_TOKEN: ((.SessionToken) // ""),
         AWS_EXPIRY: ((.Expiration) // "")
         }' "${1}" \
-        | json2properties > ${AWS_CONFIG_FILE}
+        | json2properties > "${AWS_CONFIG_FILE}"
 
-    . ${AWS_CONFIG_FILE}
+    . "${AWS_CONFIG_FILE}"
 
     # Now set the token expiry time so that it can be used for the PS1 prompt
     let AWS_TOKEN_EXPIRY=$(date +"%s" --date "${AWS_EXPIRY}")
-    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date @${AWS_TOKEN_EXPIRY})
+    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date ${AWS_TOKEN_EXPIRY})
     echo -e "INFO : ${__fg_yellow}AWS_TOKEN_EXPIRES......${__no_color} $expiry_time"
 
     export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
@@ -80,18 +80,20 @@ _load_mfaauth_credentials() {
         "$aws_secret_access_key" \
         "$AWS_MFA_ID" \
         "$response" \
+        "${DEFAULT_TOKEN_DURATION}" \
         > $AWS_CONFIG_FILE
 
     AWS_ACCESS_KEY_ID="$(grep -h aws_access_key_id "$AWS_CONFIG_FILE" | awk '{print $2}')"
     AWS_SECRET_ACCESS_KEY="$(grep -h aws_secret_access_key "$AWS_CONFIG_FILE" | awk '{print $2}')"
     AWS_SECURITY_TOKEN="$(grep -h -i aws_security_token "$AWS_CONFIG_FILE" | awk '{print $2}')"
     AWS_SESSION_TOKEN="$(grep -h -i aws_security_token "$AWS_CONFIG_FILE" | awk '{print $2}')"
+    AWS_TOKEN_EXPIRY_DATETIME="$(grep -h -i aws_token_expiry "$AWS_CONFIG_FILE" | awk '{print $2}')"
 
     echo -e "INFO : ${__fg_yellow}AWS_MFA_ID.............${__no_color} $AWS_MFA_ID"
 
     # Now set the token expiry time so that it can be used for the PS1 prompt
-    let AWS_TOKEN_EXPIRY=$(date +"%s")+$DEFAULT_TOKEN_DURATION
-    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date @${AWS_TOKEN_EXPIRY})
+    let AWS_TOKEN_EXPIRY=$(date +"%s" --date "${AWS_TOKEN_EXPIRY_DATETIME}")
+    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date "${AWS_TOKEN_EXPIRY_DATETIME}")
     echo -e "INFO : ${__fg_yellow}AWS_TOKEN_EXPIRES......${__no_color} $expiry_time"
 
     export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
@@ -125,7 +127,8 @@ _load_krb5formauth_credentials() {
         "${aws_idp_url}" \
         "${identity_path}/idp_params.json" \
         "${aws_idp_principal}" \
-        "${AWS_CONFIG_FILE}"
+        "${AWS_CONFIG_FILE}" \
+        "${DEFAULT_TOKEN_DURATION}"
 
     [ $? -eq 0 ] || { echo "ERROR: IDP Token generation failed" && return ;}
 
@@ -133,10 +136,11 @@ _load_krb5formauth_credentials() {
     AWS_SECRET_ACCESS_KEY="$(grep -h aws_secret_access_key "$AWS_CONFIG_FILE" | awk '{print $2}')"
     AWS_SECURITY_TOKEN="$(grep -h -i aws_session_token "$AWS_CONFIG_FILE" | awk '{print $2}')"
     AWS_SESSION_TOKEN="$(grep -h -i aws_session_token "$AWS_CONFIG_FILE" | awk '{print $2}')"
+    AWS_TOKEN_EXPIRY_DATETIME="$(grep -h -i aws_token_expiry "$AWS_CONFIG_FILE" | awk '{print $2}')"
 
     # Now set the token expiry time so that it can be used for the PS1 prompt
-    let AWS_TOKEN_EXPIRY=$(date +"%s")+$DEFAULT_TOKEN_DURATION
-    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date @${AWS_TOKEN_EXPIRY})
+    let AWS_TOKEN_EXPIRY=$(date +"%s" --date "${AWS_TOKEN_EXPIRY_DATETIME}")
+    local expiry_time=$(date +"%Y-%m-%d %H:%M:%S" --date "${AWS_TOKEN_EXPIRY_DATETIME}")
     echo -e "INFO : ${__fg_yellow}AWS_TOKEN_EXPIRES......${__no_color} $expiry_time"
 
     export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
@@ -146,6 +150,8 @@ _load_krb5formauth_credentials() {
 
 
 load_aws_credentials() {
+
+    local aws_id_name="$1"
 
     # Unset any AWS_ env variables
     local aws_vars="$(env | grep '^AWS_')"
@@ -169,48 +175,57 @@ load_aws_credentials() {
         unset -f "$f"
     done
 
-    # Create a list of identities as well as a corresponding list of identity names
-    local personal_id_names="$(find -L ~/.axe/identities/* -maxdepth 1 -type d -print 2> /dev/null | _xargs basename)"
-    local project_id_names="$(find -L ~/.cloudbuilder/identities/* -maxdepth 1 -type d -print 2> /dev/null | _xargs basename)"
-    local vs_id_names="${personal_id_names} ${project_id_names}"
-    local vs_ids="$(find -L ~/.axe/identities/* -maxdepth 1 -type d -print 2> /dev/null) $(find ~/.cloudbuilder/identities/* -maxdepth 1 -type d -print 2> /dev/null)"
-    local options=( $vs_id_names )
-    local real_paths=( $vs_ids )
+    if [ -z $aws_id_name ]; then
 
-    # Ensure we have at least one identity to offer before proceeding
-    if [ ! ${#options[@]} -ge 1 ]; then
-        _log "$LINENO" "No identities currently configured. RTFM."
-        return 1
+        # Create a list of identities as well as a corresponding list of identity names
+        local personal_id_names="$(find -L ~/.axe/identities/* -maxdepth 1 -type d -print 2> /dev/null | _xargs basename)"
+        local project_id_names="$(find -L ~/.cloudbuilder/identities/* -maxdepth 1 -type d -print 2> /dev/null | _xargs basename)"
+        local vs_id_names="${personal_id_names} ${project_id_names}"
+        local vs_ids="$(find -L ~/.axe/identities/* -maxdepth 1 -type d -print 2> /dev/null) $(find ~/.cloudbuilder/identities/* -maxdepth 1 -type d -print 2> /dev/null)"
+        local options=( $vs_id_names )
+        local real_paths=( $vs_ids )
+
+        # Ensure we have at least one identity to offer before proceeding
+        if [ ! ${#options[@]} -ge 1 ]; then
+            _log "$LINENO" "No identities currently configured. RTFM."
+            return 1
+        fi
+
+        _print_head_l1 "Available Identities"
+
+        profile_idx=1
+        local VS_BADGES=()
+        # Build Personal Identities
+        for next_id in $personal_id_names; do
+            VS_BADGES+=("$(printf '%b%3.3s%b : %s' "${__fg_yellow}" "${profile_idx}" "${__no_color}" "${next_id}")")
+            let profile_idx=profile_idx+1
+        done
+        # Build Project Identities
+        for next_id in $project_id_names; do
+            VS_BADGES+=("$(printf '%b%3.3s%b : %s' "${__fg_cyan}" "${profile_idx}" "${__no_color}" "${next_id}")")
+            let profile_idx=profile_idx+1
+        done
+
+        # Find the length of the longest entry
+        col_width=$(printf '%s\n' "${VS_BADGES[@]}" | awk '{ print length(), $0 | "sort -n" }' | tail -1 | awk '{print $1}')
+        badge_template="%-${col_width}.${col_width}s\\n"
+        printf $badge_template "${VS_BADGES[@]}" | column
+
+        echo
+        read -p "Please select an identity: " REPLY
+
+        let idx=$REPLY-1
+        local identity_path="${real_paths[idx]}"
+        local identity="$(basename $identity_path)"
+
+        identity_path="$(_chomp "$identity_path")"
+
+    else
+
+        # A specific ID was provided
+        identity_path="${HOME}/.axe/identities/${aws_id_name}"
+
     fi
-
-    _print_head_l1 "Available Identities"
-
-    profile_idx=1
-    local VS_BADGES=()
-    # Build Personal Identities
-    for next_id in $personal_id_names; do
-        VS_BADGES+=("$(printf '%b%3.3s%b : %s' "${__fg_yellow}" "${profile_idx}" "${__no_color}" "${next_id}")")
-        let profile_idx=profile_idx+1
-    done
-    # Build Project Identities
-    for next_id in $project_id_names; do
-        VS_BADGES+=("$(printf '%b%3.3s%b : %s' "${__fg_cyan}" "${profile_idx}" "${__no_color}" "${next_id}")")
-        let profile_idx=profile_idx+1
-    done
-
-    # Find the length of the longest entry
-    col_width=$(printf '%s\n' "${VS_BADGES[@]}" | awk '{ print length(), $0 | "sort -n" }' | tail -1 | awk '{print $1}')
-    badge_template="%-${col_width}.${col_width}s\\n"
-    printf $badge_template "${VS_BADGES[@]}" | column
-
-    echo
-    read -p "Please select an identity: " REPLY
-
-    let idx=$REPLY-1
-    local identity_path="${real_paths[idx]}"
-    local identity="$(basename $identity_path)"
-
-    identity_path="$(_chomp "$identity_path")"
 
     AWS_SSH_KEY="${identity_path}/ssh_id.pem"
     AWS_CONFIG_FILE="${identity_path}/aws.conf"

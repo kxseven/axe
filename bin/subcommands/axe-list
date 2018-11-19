@@ -66,11 +66,14 @@ usage: $CONST_SCRIPT_NAME [--help] <resource> [-f <FORMAT>]
 
 The output format can be changed by using one of the supported formats:
 
-plain, simple, grid, fancy_grid, pipe, orgtbl, rst, mediawiki, html, latex,
-latex_booktabs, tsv (default: simple)
+plain, simple, github, grid, fancy_grid, pipe, orgtbl, jira, presto, psql, rst,
+mediawiki, moinmoin, youtrack, html, latex, latex_raw, latex_booktabs, textile
+(default: simple)
 
 EOF
 }
+
+
 
 
 cleanup() {
@@ -108,7 +111,7 @@ _filter() {
 
 _tabulate() {
     cat \
-    | json2orderedtable -f "${output_format}" -s "${output_sort_keys}"
+    | json2orderedtable -s "${output_sort_keys}" ${vs_table_helper_args[*]}
 }
 
 
@@ -134,8 +137,8 @@ fi
 
 
 resource_name=${1}
-output_format="${3:-simple}"
-
+vs_args=("${@}")
+vs_table_helper_args=("${vs_args[@]:1}")
 
 ##############################################################################
 # Main Script

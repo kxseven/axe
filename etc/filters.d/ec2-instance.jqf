@@ -12,7 +12,6 @@
     PrivateIpAddress,
     InstanceType,
     KeyName,
-    IamInstanceProfile: ((.IamInstanceProfile | .Arn) // "None"),
     PublicIpAddress: (.PublicIpAddress // "None"),
     Description: ((.Tags[]?|select(.Key=="Description")|.Value) // "None")
 }

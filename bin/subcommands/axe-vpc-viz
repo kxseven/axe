@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
 Simple utility to export as much info as possible about a given VPC so that it

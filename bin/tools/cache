@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This utility script is based on the awesome answer on StackOverflow for
 # caching command output; http://stackoverflow.com/a/36113751 with some

@@ -1,0 +1,9 @@
+.git
+local/
+*.sublime*
+tmp/
+log/
+Dockerfile
+Vagrantfile
+doc/
+.gitignore

@@ -125,6 +125,7 @@ _load_krb5formauth_credentials() {
     [ $? -eq 0 ] || { echo "ERROR: I can't protect from your own stupidity. No Kerberos token found. Start with kinit" && return ;}
 
     echo -e "INFO : ${__fg_red}Kerberos IDP Account Detected... ${__no_color}"
+    echo -e "INFO : ${__fg_red}Requesting Token for............ ${REQUESTED_TOKEN_DURATION}s ${__no_color}"
     ${PROJECT_ROOT}/bin/subcommands/axe-token-krb5formauth-create \
         "${region}" \
         "${aws_idp_url}" \

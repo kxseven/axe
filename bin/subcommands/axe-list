@@ -74,8 +74,6 @@ EOF
 }
 
 
-
-
 cleanup() {
     echo "Exiting."
     exit 1
@@ -103,15 +101,29 @@ _generate() {
 
 
 _filter() {
-    cat \
-    | jq --monochrome-output --from-file "${filter_path}" \
-    | jq --monochrome-output -s '.'
+    jq --monochrome-output --from-file "${filter_path}" \
+        | jq --monochrome-output -s '.'
+}
+
+
+_discard() {
+    saveIFS=$IFS
+    IFS=','
+    local discard_filter=". "
+    for k in ${output_discard}; do
+        discard_filter="${discard_filter} |del(.${k})"
+    done
+    IFS=$saveIFS
+    discard_filter_file="$(mktemp /tmp/axe-list-XXXXXXX.jqf)"
+    echo "${discard_filter}" > "${discard_filter_file}"
+    jq --monochrome-output --from-file "${discard_filter_file}"
+    # [ -f "${discard_filter_file}" ] && rm -f "${discard_filter_file}"
 }
 
 
 _tabulate() {
     cat \
-    | json2orderedtable -s "${output_sort_keys}" ${vs_table_helper_args[*]}
+        | json2orderedtable -s "${output_sort_keys}" ${vs_table_helper_args[*]}
 }
 
 
@@ -169,6 +181,9 @@ output_sort_keys="$(grep '^#sort:' "${filter_path}" | head -1 | sed -r -e 's/^#s
 # Extract the generator if present
 output_generator="$(grep '^#foreach:' "${filter_path}" | head -1 | sed -r -e 's/^#foreach:(\s)?//g')"
 
+# Extract the omit filter if present
+output_discard="$(grep '^#discard:' "${filter_path}" | head -1 | sed -r -e 's/^#discard:(\s)?//g')"
+
 # Extract the enrichment helper if present
 output_enricher="$(grep '^#enrich:' "${filter_path}" | head -1 | sed -r -e 's/^#enrich:(\s)?//g')"
 output_enricher="${output_enricher:-cat}"
@@ -181,10 +196,10 @@ output_tidy="${output_tidy:-cat}"
 # and tabulate processing
 if [[ "" != "${output_generator}" ]]; then
 
-    _generate | _filter | _tidy | _tabulate
+    _generate | _discard | _filter | _tidy | _tabulate
 
 else
 
-    eval "${AWSCLI_CMD} ${awscli_cmd_args[@]} ${AWSCLI_DEFAULT_ARGS}" | _filter | _tidy | _tabulate
+    eval "${AWSCLI_CMD} ${awscli_cmd_args[@]} ${AWSCLI_DEFAULT_ARGS}" | _discard | _filter | _tidy | _tabulate
 
 fi

@@ -1,0 +1,18 @@
+#cmd: ec2 describe-vpc-endpoints
+#discard: VpcEndpoints[].State,VpcEndpoints[].PolicyDocument,VpcEndpoints[].Groups,VpcEndpoints[].NetworkInterfaceIds,VpcEndpoints[].RouteTableIds,VpcEndpoints[].SubnetIds,VpcEndpoints[].DnsEntries[1:]
+#sort: VpcId,ServiceName,VpcEndpointType
+
+.VpcEndpoints[] | (
+{
+    VpcId,
+    PrivateDnsEnabled,
+    ServiceName,
+    VpcEndpointId,
+    VpcEndpointType,
+    CreationTimestamp,
+    DnsName: (([ .DnsEntries[]?.DnsName ]|join(", ")) // "NA"),
+
+}
++
+((.Tags // [])|from_entries)
+)

@@ -1,9 +1,3 @@
-<p align="center">
-  <a href="https://github.com/kxseven/axe">
-  <img src="https://rawgit.com/kxseven/axe/master/docs/media/images/logo.png">
-  </a>
-</p>
-
 # AXE: Cloud Hatchet
 
 [![GitHub license](https://img.shields.io/github/license/kxseven/axe.svg?style=flat-square)](https://github.com/kxseven/axe/blob/master/LICENSE)

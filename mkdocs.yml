@@ -51,7 +51,8 @@ markdown_extensions:
 pages:
 - 'Getting Started':
   - 'Overview': 'index.md'
-  - 'Installing AXE': 'content/user-guide/installing.md'
+  - 'Get AXE': 'content/user-guide/getaxe.md'
+  - 'Install AXE': 'content/user-guide/installing.md'
   - 'Using AXE': 'content/user-guide/general.md'
   - 'Troubleshooting': 'content/user-guide/troubleshooting.md'
 - 'AXE Sub-Commands':

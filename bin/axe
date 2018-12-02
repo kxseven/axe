@@ -56,7 +56,6 @@ DEFAULT_OUT="${PROJECT_ROOT}/log/axe-cli.log"
 SUBCOMMAND_ROOT="${PROJECT_ROOT}/bin/subcommands"
 SUBCOMMANDS="$(find $SUBCOMMAND_ROOT -type f -name 'axe-*' -exec basename {} \; 2> /dev/null | sed -e 's/axe-//g')"
 VS_SUBCOMMANDS=( $SUBCOMMANDS )
-AXE_VERSION="$(cd $PROJECT_ROOT; git describe --always)"
 CLOUDBUILDER_ROOT="~/.cloudbuilder"
 
 ##############################################################################
@@ -101,7 +100,13 @@ EOF
 
 
 version() {
-    echo "$CONST_SCRIPT_NAME version $AXE_VERSION"
+    local AXE_VERSION
+    if [[ "${AXE_CONTAINER}" == "docker" ]]; then
+        echo "${CONST_SCRIPT_NAME} version ${AXE_VERSION_DOCKER}"
+    else
+        AXE_VERSION="$(cd $PROJECT_ROOT; git describe --always)"
+        echo "$CONST_SCRIPT_NAME version $AXE_VERSION"
+    fi
 }
 
 

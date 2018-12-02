@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
 Simple utility script that reads JSON from STDIN and attempts to convert the

@@ -3,7 +3,8 @@
 ## Before you start
 
 !!! tip "Do you need Kerberos/ActiveDirectory Support?"
-    You may need to install OS packages before performing the steps described in "[Getting Started](#getting-started)". For convenience the installation for OS packages is described in the "[Troubleshooting](/content/user-guide/troubleshooting/)" section at the end of this guide
+    - You may need to install OS packages before performing the steps described in "[Getting Started](#getting-started)". For convenience the installation for OS packages is described in the "[Troubleshooting](/content/user-guide/troubleshooting/)" section at the end of this guide
+    - You may find it easier to use the [Docker version of AXE](/content/user-guide/getaxe/) instead which has everything you need baked in.
 
 **Core Utilities**
 

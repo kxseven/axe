@@ -23,7 +23,7 @@ ENV AXE_CONTAINER docker
 ENV PATCHED_FONT_IN_USE yes
 ENV AXE_VERSION_DOCKER latest
 
-ENV BUILD_PACKAGES \
+ENV RUNTIME_PACKAGES \
   bash \
   coreutils \
   curl \
@@ -96,7 +96,7 @@ RUN \
     && \
     apk update && \
     apk upgrade && \
-    apk add --no-cache ${BUILD_PACKAGES} && \
+    apk add --no-cache ${RUNTIME_PACKAGES} && \
     pip install --upgrade pip && \
     pip install -r ${AXE_PYTHON_DEPS} --disable-pip-version-check && \
     apk del build-dependencies && \
@@ -114,14 +114,6 @@ RUN chown -R axe: /opt/axe
 RUN chown -R axe: /home/axe
 
 USER axe
-
-###############################################################################
-#
-# tell the port number(s) the container should expose
-#
-# Expose ports.
-#   - 8080: web UI
-#EXPOSE 8080
 
 ###############################################################################
 #

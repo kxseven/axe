@@ -12,7 +12,7 @@ This should make it easier for you to use the latest version and make it easier 
 
 ## Get and Use AXE
 
-- From your commandline pull the latest AXE image
+- From your command line pull the latest AXE image
 
     ```console
     $ docker pull kxseven/axe:latest

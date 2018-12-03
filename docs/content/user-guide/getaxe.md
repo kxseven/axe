@@ -25,6 +25,6 @@ This should make it easier for you to use the latest version and make it easier 
         -it \
         --network=host \
         -v ${HOME}/.axe:/home/axe/.axe \
-        axe:latest
+        kxseven/axe:latest
     ```
 

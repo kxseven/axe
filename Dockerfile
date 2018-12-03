@@ -87,6 +87,7 @@ COPY / /opt/axe
 
 RUN \
     apk --update add --virtual build-dependencies \
+    alpine-sdk \
     gcc \
     krb5-dev \
     musl-dev \
@@ -97,7 +98,6 @@ RUN \
     apk update && \
     apk upgrade && \
     apk add --no-cache ${RUNTIME_PACKAGES} && \
-    pip install --upgrade pip && \
     pip install -r ${AXE_PYTHON_DEPS} --disable-pip-version-check && \
     apk del build-dependencies && \
     rm -rf /var/cache/apk/*

@@ -3,6 +3,37 @@
 The change-log below has been generated using the Git history in the repo.
 
 
+### v1.9
+
+ - Corrected container reference
+ - Updated requirements to resolve issues with building Pandas on Alpine Linux
+ - Cleanup of default README
+ - Corrected typo
+ - Updated docs for docker based version
+ - Dockerfile updates
+ - Added JQF filter for VPC Endpoints. Updated axe-list subcommand to add support for discarding keys
+ - Added token duration message for IDP based token flow
+ - Added support for configurable token_duration on a per identity basis
+ - Initial Dockerfile support
+ - Updates in advance of adding support for container usage
+ - Reverted default STS Token duration requested to prevent breaking legacy AWS accounts using the 1hr default
+ - Removed Instance Profile from basic EC2 instance filter
+ - Updated SSH/SCP helper scripts to handle when default key file exists but is empty
+ - Updated usage text to reflect new output formats for list commands
+ - Added handling of empty SG and AZ lists for ALB filter
+ - Corrected package installation options
+ - Added basic support for triggering requirements install during upgrade
+ - Updates for #15 to add support for transposing rows/cols in output
+ - Corrected typo
+ - Minor update for distutils
+ - Updated token expiry handling and added support for passing an identity name to load_aws_credentials
+ - Updated token helpers to provide expiry time, rather than calculating it manually
+ - Initial updates to support longer token expiry for MFA and IDP based logins
+ - Updated utility commands in docs
+ - Added support for ; as separator in axemap
+ - Reverted use of local Material theme. RTD does not have support for Material in natice MkDocs config
+ - Updated commit based RNs
+
 ### v1.8
 
  - More doc cleanup

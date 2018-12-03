@@ -18,3 +18,27 @@ The AXE tools are a collection of Python and BASH helper scripts that are intend
 [AXE Documentation]: http://awsaxe.readthedocs.io/
 
 
+## Docker by default
+
+The preferred method of installing and using AXE is now a Docker container based version that brings you all that you need to run and use AXE without disrupting your normal OS package setup.
+
+This should make it easier for you to use the latest version and make it easier to rollback an update if a new version breaks something you relied on
+
+
+## Get and Use AXE
+
+- From your command line pull the latest AXE image
+
+    ```console
+    $ docker pull kxseven/axe:latest
+    ```
+
+- Run the AXE container, passing in your AXE identities
+
+    ```console
+    $ docker run \
+        -it \
+        --network=host \
+        -v ${HOME}/.axe:/home/axe/.axe \
+        kxseven/axe:latest
+    ```

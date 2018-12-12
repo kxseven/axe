@@ -3,6 +3,7 @@
 [![GitHub license](https://img.shields.io/github/license/kxseven/axe.svg?style=flat-square)](https://github.com/kxseven/axe/blob/master/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/kxseven/axe.svg?style=flat-square)](https://github.com/kxseven/axe/releases)
 [![GitHub changelog](https://img.shields.io/badge/docs-CHANGELOG-orange.svg?style=flat-square)](http://awsaxe.readthedocs.io/en/latest/content/about/release-notes/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/kxseven/axe.svg)](https://hub.docker.com/r/kxseven/axe)
 
 ## What is AXE and how can it help me?
 

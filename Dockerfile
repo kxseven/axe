@@ -1,19 +1,11 @@
 ####################################################################################
-#
 # AXE Container
-#
 ###############################################################################
-#
-# FROM section
-#
 FROM alpine:3.7
 MAINTAINER kxseven
 
 ###############################################################################
-#
-# ENV - Environment variables section
-# Set variables and locales
-#
+# ENVs
 ###############################################################################
 ENV AXE_ROOT /opt/axe
 ENV PYTHONPATH /opt/axe/lib/python
@@ -47,37 +39,14 @@ ENV RUNTIME_PACKAGES \
 
 
 ###############################################################################
-#
-# ARG - Arguments section
-# Set arguments on build
-#
+# ARGs
 ###############################################################################
 
 
 ###############################################################################
-#
-# LABEL section - default labels
-# Basic build-time metadata as defined at http://label-schema.org
-#
+# LABELs
 ###############################################################################
 
-###############################################################################
-#
-# Setup any volumes needed for persistant storage
-#
-###############################################################################
-#VOLUME ${DATADIR}
-#VOLUME ${CONFDIR}
-
-###############################################################################
-#
-# ACTIONS section: for COPY and RUN commands
-#
-# Install any dependancies using '&&' to combine commands that should be in the
-# same 'layer' in order to minimise the number of tasks that actually need to
-# be run on subsequent builds
-#
-###############################################################################
 
 # Add our dummy user and group
 RUN adduser -D -u 1000 axe
@@ -114,12 +83,6 @@ RUN chown -R axe: /opt/axe
 RUN chown -R axe: /home/axe
 
 USER axe
-
-###############################################################################
-#
-# CMD section:
-# run the application
-#
 
 WORKDIR /home/axe
 

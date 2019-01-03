@@ -8,10 +8,6 @@
 #   and AWS_SECRET_ACCESS_KEY
 #
 
-# AWS Tool helpers
-alias aws-session-save="env | grep '^AWS' | xargs -i echo \"export {}\" | sed -e 's/=/=\"/' | sed -e 's/$/\"/' > /tmp/aws-session-credentials"
-alias aws-session-load=". /tmp/aws-session-credentials"
-alias aws-session-purge="env | grep '^AWS' | awk -F'=' '{print \$1}' | xargs -i echo 'unset {}' > /tmp/aws-session-purge; . /tmp/aws-session-purge"
 
 # Default MFA token duration in seconds
 DEFAULT_TOKEN_DURATION=3600
@@ -158,7 +154,7 @@ _load_krb5formauth_credentials() {
 }
 
 
-load_aws_credentials() {
+.login() {
 
     local aws_id_name="$1"
 
@@ -274,3 +270,15 @@ load_aws_credentials() {
     unset AWS_CONFIG_FILE
 
 }
+
+
+# AWS Tool helpers
+alias aws-session-save="env | grep '^AWS' | xargs -i echo \"export {}\" | sed -e 's/=/=\"/' | sed -e 's/$/\"/' > /tmp/aws-session-credentials"
+alias aws-session-load=". /tmp/aws-session-credentials"
+alias aws-session-purge="env | grep '^AWS' | awk -F'=' '{print \$1}' | xargs -i echo 'unset {}' > /tmp/aws-session-purge; . /tmp/aws-session-purge"
+alias load_aws_credentials=.login
+
+alias .session-save="env | grep '^AWS' | xargs -i echo \"export {}\" | sed -e 's/=/=\"/' | sed -e 's/$/\"/' > /tmp/aws-session-credentials"
+alias .session-load=". /tmp/aws-session-credentials"
+alias .logout="env | grep '^AWS' | awk -F'=' '{print \$1}' | xargs -i echo 'unset {}' > /tmp/aws-session-purge; . /tmp/aws-session-purge"
+

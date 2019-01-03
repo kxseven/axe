@@ -28,3 +28,14 @@ This should make it easier for you to use the latest version and make it easier 
         kxseven/axe:latest
     ```
 
+- Run the AXE container, passing in your AXE identities and your Kerberos setup
+
+    ```console
+    $ docker run \
+        -it \
+        --network=host \
+        -v ${HOME}/.axe:/home/axe/.axe \
+        -v /etc/krb5.conf:/etc/krb5.conf \
+        -v /etc/krb5.conf.d/:/etc/krb5.conf.d/ \
+        kxseven/axe:latest
+    ```

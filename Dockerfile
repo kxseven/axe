@@ -35,6 +35,7 @@ ENV RUNTIME_PACKAGES \
   util-linux \
   util-linux-bash-completion \
   jq \
+  krb5 \
   ca-certificates
 
 

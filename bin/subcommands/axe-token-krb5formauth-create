@@ -90,7 +90,7 @@ try:
     aws_config_file = options['<creds_file>']
     aws_region = options['<aws_region>']
 
-    if principal == "<ask>":
+    if principal == "ASK":
         print('You can get your Realm Principal from using the "klist | grep \'Default principal:\'" command')
         principal = raw_input('Enter value for Realm Principal: ')
 

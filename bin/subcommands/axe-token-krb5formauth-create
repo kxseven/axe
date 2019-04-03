@@ -39,6 +39,7 @@ from future.utils import iteritems
 import sys
 import boto.sts
 import boto.s3
+from botocore.exceptions import ClientError
 import requests
 import getpass
 import base64
@@ -51,6 +52,9 @@ from urlparse import urlparse, urljoin
 from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 import os
 import docopt
+from tabulate import tabulate
+from operator import itemgetter, attrgetter
+from collections import OrderedDict
 from axeutils.logger import AxeLog
 from axeutils import check_imports
 from pprint import pprint as pp
@@ -64,6 +68,77 @@ CONST_AXE_ROOT = os.getenv('AXE_ROOT', '')
 
 ###############################################################################
 # CONFIG - End (Do Not Edit Below)
+###############################################################################
+
+
+###############################################################################
+# Functions
+###############################################################################
+
+def multikeysort(items, columns):
+    # From: https://stackoverflow.com/questions/1143671/python-sorting-list-of-dictionaries-by-multiple-keys
+    _log.debug('Sorting rows with keys: {}'.format(columns))
+    comparers = [((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1)) for col in columns]
+
+    def lowercasevalues(d):
+        newDict = OrderedDict()
+        for k, v in d.iteritems():
+            if (isinstance(v, (str, basestring))):
+                v = v.lower()
+            newDict[k] = v
+        return newDict
+
+    def comparer(left, right):
+        for fn, mult in comparers:
+            result = cmp(fn(left), fn(right))
+            if result:
+                return mult * result
+        else:
+            return 0
+
+    sorted_items = sorted(items, cmp=comparer, key=lambda i: lowercasevalues(i))
+    _log.debug('Sorted rows: {}'.format(sorted_items))
+    return sorted_items
+
+
+
+def get_sts_token_with_duration(connection, role_arn, principal_arn, assertion, duration_seconds):
+
+    token = None
+
+    try:
+
+        _log.debug('Requesting token with specified [{}] duration'.format(duration_seconds))
+        token = connection.assume_role_with_saml(
+            role_arn,
+            principal_arn,
+            assertion,
+            duration_seconds=duration_seconds
+            )
+
+    except boto.exception.BotoServerError as e:
+
+        token_too_large_message = 'The requested DurationSeconds exceeds the MaxSessionDuration set for this role.'
+        if token_too_large_message == e.message:
+            _log.error('The requested DurationSeconds [{}] exceeds the MaxSessionDuration set for this role'.format(duration_seconds))
+            _log.warn('Attempting request using fallback DurationSeconds [3600]')
+
+            token = connection.assume_role_with_saml(
+                role_arn,
+                principal_arn,
+                assertion,
+                duration_seconds=3600
+                )
+
+    except Exception as e:
+        _log.error('An unhandled Exception occured')
+
+    return token
+
+
+
+###############################################################################
+# Main Loop
 ###############################################################################
 
 _log = AxeLog(__file__)
@@ -262,10 +337,36 @@ try:
     print ""
     if len(awsroles) > 1:
         i = 0
-        print "Please choose the role you would like to assume:"
+        user_role_table = []
+        internal_role_table = []
+
+        # Group the roles by Account ID
+
         for awsrole in awsroles:
-            print '[', i, ']: ', awsrole.split(',')[0]
-            i += 1
+            r = awsrole.split(',')[0]
+            p = awsrole.split(',')[1]
+            account_id = r.split(':')[4]
+            role_name = r.split(':')[5]
+
+            internal_role_table.append({
+                "AWS Account": account_id,
+                "Role Name": role_name,
+                "role_arn": r,
+                "principal_arn": p
+            })
+
+            user_role_table.append({
+                "AWS Account": account_id,
+                "Role Name": role_name
+            })
+
+        # Sort the data
+        sorted_user_dict = multikeysort(user_role_table, ['AWS Account', 'Role Name'])
+        sorted_internal_dict = multikeysort(internal_role_table, ['AWS Account', 'Role Name'])
+        print("Please choose the role you would like to assume:")
+        print("")
+        print(tabulate(sorted_user_dict, headers='keys', tablefmt='simple', showindex=True))
+
         print "Selection: ",
         selectedroleindex = raw_input()
 
@@ -274,35 +375,43 @@ try:
             print 'You selected an invalid role index, please try again'
             sys.exit(0)
 
-        role_arn = awsroles[int(selectedroleindex)].split(',')[0]
-        principal_arn = awsroles[int(selectedroleindex)].split(',')[1]
+        role_arn = sorted_internal_dict[int(selectedroleindex)]['role_arn']
+        principal_arn = sorted_internal_dict[int(selectedroleindex)]['principal_arn']
+
     else:
         role_arn = awsroles[0].split(',')[0]
         principal_arn = awsroles[0].split(',')[1]
 
     # Use the assertion to get an AWS STS token using Assume Role with SAML
     conn = boto.sts.connect_to_region(aws_region)
-    token = conn.assume_role_with_saml(
+
+
+    token = get_sts_token_with_duration(
+        conn,
         role_arn,
         principal_arn,
         assertion,
         duration_seconds=options['<token_duration>']
-        )
+    )
 
-    _log.debug('Dumping STS Token')
-    _log.debug('aws_access_key_id {}'.format(token.credentials.access_key))
-    _log.debug('aws_secret_access_key {}'.format(token.credentials.secret_key))
-    _log.debug('aws_session_token {}'.format(token.credentials.session_token))
-    _log.debug('aws_token_expiry {}'.format(token.credentials.expiration))
+    if token is not None:
 
-    # Write the updated config file
-    with open(aws_config_file, 'w+') as f:
-        f.write('aws_access_key_id {}\n'.format(token.credentials.access_key))
-        f.write('aws_secret_access_key {}\n'.format(token.credentials.secret_key))
-        f.write('aws_session_token {}\n'.format(token.credentials.session_token))
-        f.write('aws_token_expiry {}\n'.format(token.credentials.expiration))
-        f.close()
+        _log.debug('Dumping STS Token')
+        _log.debug('aws_access_key_id {}'.format(token.credentials.access_key))
+        _log.debug('aws_secret_access_key {}'.format(token.credentials.secret_key))
+        _log.debug('aws_session_token {}'.format(token.credentials.session_token))
+        _log.debug('aws_token_expiry {}'.format(token.credentials.expiration))
+
+        # Write the updated config file
+        with open(aws_config_file, 'w+') as f:
+            f.write('aws_access_key_id {}\n'.format(token.credentials.access_key))
+            f.write('aws_secret_access_key {}\n'.format(token.credentials.secret_key))
+            f.write('aws_session_token {}\n'.format(token.credentials.session_token))
+            f.write('aws_token_expiry {}\n'.format(token.credentials.expiration))
+            f.close()
+
         sys.exit(0)
+
 
     sys.exit(1)
 
